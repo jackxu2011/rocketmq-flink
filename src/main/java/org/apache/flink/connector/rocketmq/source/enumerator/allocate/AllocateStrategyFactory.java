@@ -19,7 +19,7 @@ package org.apache.flink.connector.rocketmq.source.enumerator.allocate;
 
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
+import org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.RocketMQSourceEnumState;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
 
@@ -39,7 +39,7 @@ public class AllocateStrategyFactory {
 
         String allocateStrategyName =
                 rocketmqSourceOptions.getString(
-                        RocketMQSourceOptions.ALLOCATE_MESSAGE_QUEUE_STRATEGY);
+                        RocketMQSourceConnectorOptions.ALLOCATE_MESSAGE_QUEUE_STRATEGY);
 
         switch (allocateStrategyName) {
             case STRATEGY_NAME_CONSISTENT_HASH:

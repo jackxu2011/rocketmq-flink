@@ -18,8 +18,6 @@
 
 package org.apache.flink.connector.rocketmq.source.enumerator;
 
-import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Sets;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.connector.source.Boundedness;
@@ -30,17 +28,21 @@ import org.apache.flink.api.connector.source.SplitsAssignment;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.source.InnerConsumer;
 import org.apache.flink.connector.rocketmq.source.InnerConsumerImpl;
-import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
+import org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategy;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
 import org.apache.flink.util.FlinkRuntimeException;
+
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Sets;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -61,14 +63,10 @@ public class RocketMQSourceEnumerator
     private final Configuration configuration;
     private final SplitEnumeratorContext<RocketMQSourceSplit> context;
     private final Boundedness boundedness;
-
-    private InnerConsumer consumer;
-
     // Users can specify the starting / stopping offset initializer.
     private final AllocateStrategy allocateStrategy;
     private final OffsetsSelector startingOffsetsSelector;
     private final OffsetsSelector stoppingOffsetsSelector;
-
     // The internal states of the enumerator.
     // This set is only accessed by the partition discovery callable in the callAsync() method.
     // The current assignment by reader id. Only accessed by the coordinator thread.
@@ -76,10 +74,10 @@ public class RocketMQSourceEnumerator
     // ready.
     private final Set<MessageQueue> allocatedSet;
     private final Map<Integer, Set<RocketMQSourceSplit>> pendingSplitAssignmentMap;
-
     // Param from configuration
     private final String groupId;
     private final long partitionDiscoveryIntervalMs;
+    private InnerConsumer consumer;
 
     public RocketMQSourceEnumerator(
             OffsetsSelector startingOffsetsSelector,
@@ -116,11 +114,12 @@ public class RocketMQSourceEnumerator
                         configuration, context, new RocketMQSourceEnumState(allocatedSet));
 
         // For rocketmq setting
-        this.groupId = configuration.getString(RocketMQSourceOptions.CONSUMER_GROUP);
+        this.groupId = configuration.getString(RocketMQSourceConnectorOptions.GROUP);
         this.startingOffsetsSelector = startingOffsetsSelector;
         this.stoppingOffsetsSelector = stoppingOffsetsSelector;
         this.partitionDiscoveryIntervalMs =
-                configuration.getLong(RocketMQSourceOptions.PARTITION_DISCOVERY_INTERVAL_MS);
+                configuration.getLong(
+                        RocketMQSourceConnectorOptions.PARTITION_DISCOVERY_INTERVAL_MS);
     }
 
     @Override
@@ -211,8 +210,8 @@ public class RocketMQSourceEnumerator
         Set<String> topicSet =
                 Sets.newHashSet(
                         configuration
-                                .getString(RocketMQSourceOptions.TOPIC)
-                                .split(RocketMQSourceOptions.TOPIC_SEPARATOR));
+                                .getOptional(RocketMQSourceConnectorOptions.TOPIC)
+                                .orElseGet(Collections::emptyList));
 
         return topicSet.stream()
                 .flatMap(
@@ -352,6 +351,32 @@ public class RocketMQSourceEnumerator
         }
     }
 
+    @VisibleForTesting
+    private SourceChangeResult getSourceChangeResult(Set<MessageQueue> latestSet) {
+        Set<MessageQueue> currentSet = Collections.unmodifiableSet(this.allocatedSet);
+        Set<MessageQueue> increaseSet = Sets.difference(latestSet, currentSet);
+        Set<MessageQueue> decreaseSet = Sets.difference(currentSet, latestSet);
+
+        SourceChangeResult changeResult = new SourceChangeResult(increaseSet, decreaseSet);
+
+        // Current topic route is same as before
+        if (changeResult.isEmpty()) {
+            log.info(
+                    "Request topic route for service discovery, current allocated queues size={}",
+                    currentSet.size());
+        } else {
+            log.info(
+                    "Request topic route for service discovery, current allocated queues size: {}. "
+                            + "Changed details, current={}, latest={}, increase={}, decrease={}",
+                    currentSet.size(),
+                    currentSet,
+                    latestSet,
+                    increaseSet,
+                    decreaseSet);
+        }
+        return changeResult;
+    }
+
     /** A container class to hold the newly added partitions and removed partitions. */
     @VisibleForTesting
     private static class SourceChangeResult {
@@ -400,31 +425,5 @@ public class RocketMQSourceEnumerator
         public Set<MessageQueue> getDecreaseSet() {
             return decreaseSet;
         }
-    }
-
-    @VisibleForTesting
-    private SourceChangeResult getSourceChangeResult(Set<MessageQueue> latestSet) {
-        Set<MessageQueue> currentSet = Collections.unmodifiableSet(this.allocatedSet);
-        Set<MessageQueue> increaseSet = Sets.difference(latestSet, currentSet);
-        Set<MessageQueue> decreaseSet = Sets.difference(currentSet, latestSet);
-
-        SourceChangeResult changeResult = new SourceChangeResult(increaseSet, decreaseSet);
-
-        // Current topic route is same as before
-        if (changeResult.isEmpty()) {
-            log.info(
-                    "Request topic route for service discovery, current allocated queues size={}",
-                    currentSet.size());
-        } else {
-            log.info(
-                    "Request topic route for service discovery, current allocated queues size: {}. "
-                            + "Changed details, current={}, latest={}, increase={}, decrease={}",
-                    currentSet.size(),
-                    currentSet,
-                    latestSet,
-                    increaseSet,
-                    decreaseSet);
-        }
-        return changeResult;
     }
 }

@@ -47,7 +47,7 @@ public class RocketMQRowDataConverter implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(RocketMQRowDataConverter.class);
 
-    private final String topic;
+    private final List<String> topic;
     private final String tag;
     private final String dynamicColumn;
     private final String fieldDelimiter;
@@ -56,22 +56,19 @@ public class RocketMQRowDataConverter implements Serializable {
     private final boolean isDynamicTag;
     private final boolean isDynamicTagIncluded;
     private final boolean writeKeysToBody;
-    private boolean onlyVarbinary = false;
-
     private final String[] keyColumns;
     private final RowTypeInfo rowTypeInfo;
     private final DataType[] fieldDataTypes;
-
+    private final boolean hasMetadata;
+    private final int[] metadataPositions;
+    private boolean onlyVarbinary = false;
     private int[] keyFieldIndexes;
     private int[] tagFieldIndexes;
     private int[] bodyFieldIndexes;
     private DataType[] bodyFieldTypes;
 
-    private final boolean hasMetadata;
-    private final int[] metadataPositions;
-
     public RocketMQRowDataConverter(
-            String topic,
+            List<String> topic,
             String tag,
             String dynamicColumn,
             String fieldDelimiter,
@@ -152,7 +149,7 @@ public class RocketMQRowDataConverter implements Serializable {
             return null;
         }
         Message message = new Message();
-        message.setTopic(topic);
+        message.setTopic(topic.get(0));
         List<String> keys = new ArrayList<>();
         for (int fieldIndex : keyFieldIndexes) {
             keys.add(row.getString(fieldIndex).toString());

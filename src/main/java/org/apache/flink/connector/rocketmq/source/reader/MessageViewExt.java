@@ -50,8 +50,6 @@ public class MessageViewExt implements MessageView {
     private final int deliveryAttempt;
 
     /** trust message born timestamp, we don't care store timestamp */
-    private final long eventTime;
-
     private final long ingestionTime;
 
     private final Map<String, String> properties;
@@ -70,8 +68,7 @@ public class MessageViewExt implements MessageView {
                         : new ArrayList<>();
         this.body = messageExt.getBody();
         this.deliveryAttempt = messageExt.getReconsumeTimes();
-        this.eventTime = messageExt.getBornTimestamp();
-        this.ingestionTime = System.currentTimeMillis();
+        this.ingestionTime = messageExt.getBornTimestamp();
         this.properties = messageExt.getProperties();
     }
 
@@ -126,11 +123,6 @@ public class MessageViewExt implements MessageView {
     }
 
     @Override
-    public long getEventTime() {
-        return eventTime;
-    }
-
-    @Override
     public long getIngestionTime() {
         return ingestionTime;
     }
@@ -165,8 +157,6 @@ public class MessageViewExt implements MessageView {
                 + keys
                 + ", deliveryAttempt="
                 + deliveryAttempt
-                + ", eventTime="
-                + eventTime
                 + ", ingestionTime="
                 + ingestionTime
                 + '}';

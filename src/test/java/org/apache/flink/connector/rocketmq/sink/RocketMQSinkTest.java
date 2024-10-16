@@ -112,9 +112,11 @@ public class RocketMQSinkTest {
                         .setEndpoints(ConnectorConfig.ENDPOINTS)
                         .setGroupId(ConnectorConfig.PRODUCER_GROUP)
                         .setConfig(
-                                RocketMQSinkOptions.OPTIONAL_ACCESS_KEY, ConnectorConfig.ACCESS_KEY)
+                                RocketMQSinkConnectorOptions.OPTIONAL_ACCESS_KEY,
+                                ConnectorConfig.ACCESS_KEY)
                         .setConfig(
-                                RocketMQSinkOptions.OPTIONAL_SECRET_KEY, ConnectorConfig.SECRET_KEY)
+                                RocketMQSinkConnectorOptions.OPTIONAL_SECRET_KEY,
+                                ConnectorConfig.SECRET_KEY)
                         .setSerializer(
                                 (RocketMQSerializationSchema<String>)
                                         (element, context, timestamp) -> {
@@ -131,7 +133,7 @@ public class RocketMQSinkTest {
                         // If you use transaction message, need set transaction timeout
                         .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
                         .setConfig(
-                                RocketMQSinkOptions.TRANSACTION_TIMEOUT,
+                                RocketMQSinkConnectorOptions.TRANSACTION_TIMEOUT,
                                 TimeUnit.SECONDS.toSeconds(30))
                         .build();
 

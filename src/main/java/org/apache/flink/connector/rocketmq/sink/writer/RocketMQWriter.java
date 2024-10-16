@@ -25,7 +25,7 @@ import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.rocketmq.legacy.common.selector.MessageQueueSelector;
 import org.apache.flink.connector.rocketmq.sink.InnerProducer;
 import org.apache.flink.connector.rocketmq.sink.InnerProducerImpl;
-import org.apache.flink.connector.rocketmq.sink.RocketMQSinkOptions;
+import org.apache.flink.connector.rocketmq.sink.RocketMQSinkConnectorOptions;
 import org.apache.flink.connector.rocketmq.sink.committer.SendCommittable;
 import org.apache.flink.connector.rocketmq.sink.writer.context.RocketMQSinkContext;
 import org.apache.flink.connector.rocketmq.sink.writer.context.RocketMQSinkContextImpl;
@@ -71,7 +71,7 @@ public class RocketMQWriter<IN>
 
         this.deliveryGuarantee =
                 DeliveryGuarantee.valueOf(
-                        configuration.getString(RocketMQSinkOptions.DELIVERY_GUARANTEE));
+                        configuration.getString(RocketMQSinkConnectorOptions.DELIVERY_GUARANTEE));
         this.messageQueueSelector = messageQueueSelector;
         this.serializationSchema = serializationSchema;
         this.rocketmqSinkContext = new RocketMQSinkContextImpl(initContext, configuration);

@@ -51,6 +51,14 @@ public class SimpleAdmin implements Closeable {
                 adminExt.getInstanceName());
     }
 
+    public static void main(String[] args) throws Exception {
+        SimpleAdmin simpleAdmin = new SimpleAdmin();
+        Set<String> brokerAddressSet = simpleAdmin.getBrokerAddress();
+        simpleAdmin.deleteSubscriptionGroup(brokerAddressSet);
+        simpleAdmin.createTestTopic(brokerAddressSet);
+        simpleAdmin.close();
+    }
+
     @Override
     public void close() {
         this.adminExt.shutdown();
@@ -58,7 +66,9 @@ public class SimpleAdmin implements Closeable {
 
     private Set<String> getBrokerAddress()
             throws RemotingException, InterruptedException, MQClientException {
-        return adminExt.examineTopicRouteInfo(ConnectorConfig.CLUSTER_NAME).getBrokerDatas()
+        return adminExt
+                .examineTopicRouteInfo(ConnectorConfig.CLUSTER_NAME)
+                .getBrokerDatas()
                 .stream()
                 .map(BrokerData::selectBrokerAddr)
                 .collect(Collectors.toSet());
@@ -95,13 +105,5 @@ public class SimpleAdmin implements Closeable {
             adminExt.deleteSubscriptionGroup(brokerAddress, ConnectorConfig.CONSUMER_GROUP, true);
             log.info("Delete consumer group success, brokerAddress={}", brokerAddress);
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        SimpleAdmin simpleAdmin = new SimpleAdmin();
-        Set<String> brokerAddressSet = simpleAdmin.getBrokerAddress();
-        simpleAdmin.deleteSubscriptionGroup(brokerAddressSet);
-        simpleAdmin.createTestTopic(brokerAddressSet);
-        simpleAdmin.close();
     }
 }

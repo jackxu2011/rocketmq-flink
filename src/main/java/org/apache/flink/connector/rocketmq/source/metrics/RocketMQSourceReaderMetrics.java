@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 @PublicEvolving
 public class RocketMQSourceReaderMetrics {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RocketMQSourceReaderMetrics.class);
-
     public static final String ROCKETMQ_SOURCE_READER_METRIC_GROUP = "RocketmqSourceReader";
     public static final String TOPIC_GROUP = "topic";
     public static final String QUEUE_GROUP = "queue";
@@ -37,10 +35,10 @@ public class RocketMQSourceReaderMetrics {
     public static final String COMMITS_SUCCEEDED_METRIC_COUNTER = "commitsSucceeded";
     public static final String COMMITS_FAILED_METRIC_COUNTER = "commitsFailed";
     public static final String ROCKETMQ_CONSUMER_METRIC_GROUP = "RocketMQConsumer";
-
     public static final String CONSUMER_FETCH_MANAGER_GROUP = "consumer-fetch-manager-metrics";
     public static final String BYTES_CONSUMED_TOTAL = "bytes-consumed-total";
     public static final String RECORDS_LAG = "records-lag";
+    private static final Logger LOG = LoggerFactory.getLogger(RocketMQSourceReaderMetrics.class);
 
     public RocketMQSourceReaderMetrics(SourceReaderMetricGroup sourceReaderMetricGroup) {}
 

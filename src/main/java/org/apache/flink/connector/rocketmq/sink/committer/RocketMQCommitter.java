@@ -41,8 +41,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class RocketMQCommitter implements Committer<SendCommittable>, Cloneable {
 
     private static final Logger LOG = LoggerFactory.getLogger(RocketMQCommitter.class);
-    private InnerProducer producer;
     private final Configuration configuration;
+    private InnerProducer producer;
 
     public RocketMQCommitter(Configuration configuration) {
         this.configuration = configuration;

@@ -5,11 +5,11 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.RestOptions;
-import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.connector.rocketmq.example.ConnectorConfig;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
+import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.streaming.api.CheckpointingMode;
@@ -41,8 +41,12 @@ public class RocketMQSourceTest {
         RocketMQSource<String> source =
                 RocketMQSource.<String>builder()
                         .setEndpoints(ConnectorConfig.ENDPOINTS)
-                        .setConfig(RocketMQOptions.OPTIONAL_ACCESS_KEY, ConnectorConfig.ACCESS_KEY)
-                        .setConfig(RocketMQOptions.OPTIONAL_SECRET_KEY, ConnectorConfig.SECRET_KEY)
+                        .setConfig(
+                                RocketMQConnectorOptions.OPTIONAL_ACCESS_KEY,
+                                ConnectorConfig.ACCESS_KEY)
+                        .setConfig(
+                                RocketMQConnectorOptions.OPTIONAL_SECRET_KEY,
+                                ConnectorConfig.SECRET_KEY)
                         .setGroupId(ConnectorConfig.CONSUMER_GROUP)
                         .setTopics(ConnectorConfig.SOURCE_TOPIC_1, ConnectorConfig.SOURCE_TOPIC_2)
                         .setMinOffsets(OffsetsSelector.earliest())

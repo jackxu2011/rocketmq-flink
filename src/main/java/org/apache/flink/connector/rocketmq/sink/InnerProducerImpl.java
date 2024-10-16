@@ -57,18 +57,19 @@ public class InnerProducerImpl implements InnerProducer {
 
     private final Configuration configuration;
     private final TransactionMQProducer producer;
-    private MQClientInstance mqClientInstance;
-
     private final String endPoints;
     private final String groupId;
+    private MQClientInstance mqClientInstance;
 
     public InnerProducerImpl(Configuration configuration) {
         this.configuration = configuration;
-        this.groupId = configuration.getString(RocketMQSinkOptions.PRODUCER_GROUP);
-        this.endPoints = configuration.getString(RocketMQSinkOptions.ENDPOINTS);
+        this.groupId = configuration.getString(RocketMQSinkConnectorOptions.PRODUCER_GROUP);
+        this.endPoints = configuration.getString(RocketMQSinkConnectorOptions.ENDPOINTS);
 
-        String accessKey = configuration.getString(RocketMQSinkOptions.OPTIONAL_ACCESS_KEY);
-        String secretKey = configuration.getString(RocketMQSinkOptions.OPTIONAL_SECRET_KEY);
+        String accessKey =
+                configuration.getString(RocketMQSinkConnectorOptions.OPTIONAL_ACCESS_KEY);
+        String secretKey =
+                configuration.getString(RocketMQSinkConnectorOptions.OPTIONAL_SECRET_KEY);
 
         if (!StringUtils.isNullOrWhitespaceOnly(accessKey)
                 && !StringUtils.isNullOrWhitespaceOnly(secretKey)) {
@@ -88,7 +89,7 @@ public class InnerProducerImpl implements InnerProducer {
                         groupId,
                         UUID.randomUUID().toString()));
 
-        int corePoolSize = configuration.getInteger(RocketMQSinkOptions.EXECUTOR_NUM);
+        int corePoolSize = configuration.getInteger(RocketMQSinkConnectorOptions.EXECUTOR_NUM);
         producer.setExecutorService(
                 new ThreadPoolExecutor(
                         corePoolSize,
@@ -115,7 +116,7 @@ public class InnerProducerImpl implements InnerProducer {
                     @Override
                     public LocalTransactionState checkLocalTransaction(MessageExt msg) {
                         long transactionTimeout =
-                                configuration.get(RocketMQSinkOptions.TRANSACTION_TIMEOUT);
+                                configuration.get(RocketMQSinkConnectorOptions.TRANSACTION_TIMEOUT);
                         if (System.currentTimeMillis() - msg.getBornTimestamp()
                                 > transactionTimeout) {
                             LOG.info(
@@ -192,7 +193,7 @@ public class InnerProducerImpl implements InnerProducer {
 
                         // In general, message id and transaction id should be the same
                         long transactionTimeout =
-                                configuration.get(RocketMQSinkOptions.TRANSACTION_TIMEOUT);
+                                configuration.get(RocketMQSinkConnectorOptions.TRANSACTION_TIMEOUT);
                         message.putUserProperty(
                                 MessageConst.PROPERTY_CHECK_IMMUNITY_TIME_IN_SECONDS,
                                 String.valueOf(transactionTimeout));

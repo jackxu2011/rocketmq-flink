@@ -19,7 +19,8 @@
 package org.apache.flink.connector.rocketmq.sink.table;
 
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
+import org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions;
+import org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSinkFactory;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogTable;
@@ -57,43 +58,6 @@ public class RocketMQDynamicTableSinkFactoryTest {
     private static final String NAME_SERVER_ADDRESS =
             "http://${instanceId}.${region}.mq-internal.aliyuncs.com:8080";
 
-    @Ignore
-    @Test
-    public void testRocketMQDynamicTableSinkWithLegalOption() {
-        final Map<String, String> options = new HashMap<>();
-        options.put("connector", IDENTIFIER);
-        options.put(RocketMQSourceOptions.TOPIC.key(), TOPIC);
-        options.put(
-                RocketMQSourceOptions.OPTIONAL_STARTUP_OFFSET_TIMESTAMP.key(),
-                String.valueOf(System.currentTimeMillis()));
-        final DynamicTableSink tableSink = createDynamicTableSink(options);
-        assertTrue(tableSink instanceof RocketMQDynamicTableSink);
-        assertEquals(RocketMQDynamicTableSink.class.getName(), tableSink.asSummaryString());
-    }
-
-    @Test(expected = ValidationException.class)
-    public void testRocketMQDynamicTableSinkWithoutRequiredOption() {
-        final Map<String, String> options = new HashMap<>();
-        options.put("connector", IDENTIFIER);
-        options.put(RocketMQSourceOptions.TOPIC.key(), TOPIC);
-        options.put(
-                RocketMQSourceOptions.OPTIONAL_STARTUP_OFFSET_TIMESTAMP.key(),
-                String.valueOf(System.currentTimeMillis()));
-        options.put(RocketMQSourceOptions.OPTIONAL_TAG.key(), "test_tag");
-        createDynamicTableSink(options);
-    }
-
-    @Test(expected = ValidationException.class)
-    public void testRocketMQDynamicTableSinkWithUnknownOption() {
-        final Map<String, String> options = new HashMap<>();
-        options.put(RocketMQSourceOptions.TOPIC.key(), TOPIC);
-        options.put(
-                RocketMQSourceOptions.OPTIONAL_STARTUP_OFFSET_TIMESTAMP.key(),
-                String.valueOf(System.currentTimeMillis()));
-        options.put("unknown", "test_option");
-        createDynamicTableSink(options);
-    }
-
     private static DynamicTableSink createDynamicTableSink(Map<String, String> options) {
         return FactoryUtil.createTableSink(
                 null,
@@ -108,5 +72,42 @@ public class RocketMQDynamicTableSinkFactoryTest {
                 new Configuration(),
                 RocketMQDynamicTableSinkFactory.class.getClassLoader(),
                 false);
+    }
+
+    @Ignore
+    @Test
+    public void testRocketMQDynamicTableSinkWithLegalOption() {
+        final Map<String, String> options = new HashMap<>();
+        options.put("connector", IDENTIFIER);
+        options.put(RocketMQSourceConnectorOptions.TOPIC.key(), TOPIC);
+        options.put(
+                RocketMQSourceConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS.key(),
+                String.valueOf(System.currentTimeMillis()));
+        final DynamicTableSink tableSink = createDynamicTableSink(options);
+        assertTrue(tableSink instanceof RocketMQDynamicTableSink);
+        assertEquals(RocketMQDynamicTableSink.class.getName(), tableSink.asSummaryString());
+    }
+
+    @Test(expected = ValidationException.class)
+    public void testRocketMQDynamicTableSinkWithoutRequiredOption() {
+        final Map<String, String> options = new HashMap<>();
+        options.put("connector", IDENTIFIER);
+        options.put(RocketMQSourceConnectorOptions.TOPIC.key(), TOPIC);
+        options.put(
+                RocketMQSourceConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS.key(),
+                String.valueOf(System.currentTimeMillis()));
+        options.put(RocketMQSourceConnectorOptions.SCAN_FILTER_TAG.key(), "test_tag");
+        createDynamicTableSink(options);
+    }
+
+    @Test(expected = ValidationException.class)
+    public void testRocketMQDynamicTableSinkWithUnknownOption() {
+        final Map<String, String> options = new HashMap<>();
+        options.put(RocketMQSourceConnectorOptions.TOPIC.key(), TOPIC);
+        options.put(
+                RocketMQSourceConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS.key(),
+                String.valueOf(System.currentTimeMillis()));
+        options.put("unknown", "test_option");
+        createDynamicTableSink(options);
     }
 }

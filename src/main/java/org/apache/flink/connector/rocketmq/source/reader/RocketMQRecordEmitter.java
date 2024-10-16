@@ -44,7 +44,7 @@ public class RocketMQRecordEmitter<T>
 
         try {
             sourceOutputWrapper.setSourceOutput(output);
-            sourceOutputWrapper.setTimestamp(element.getEventTime());
+            sourceOutputWrapper.setTimestamp(element.getIngestionTime());
             deserializationSchema.deserialize(element, sourceOutputWrapper);
             splitState.setCurrentOffset(element.getQueueOffset() + 1);
         } catch (Exception e) {

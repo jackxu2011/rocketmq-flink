@@ -21,8 +21,8 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 
-import org.apache.flink.shaded.guava30.com.google.common.collect.ImmutableList;
-import org.apache.flink.shaded.guava30.com.google.common.collect.ImmutableSet;
+import org.apache.flink.shaded.guava31.com.google.common.collect.ImmutableList;
+import org.apache.flink.shaded.guava31.com.google.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -54,6 +54,11 @@ public class RocketMQConfigValidator {
         this.requiredOptions = requiredOptions;
     }
 
+    /** Return the builder for building {@link RocketMQConfigValidator}. */
+    public static RocketMQConfigValidatorBuilder builder() {
+        return new RocketMQConfigValidatorBuilder();
+    }
+
     /** Package private validating for using in {@link RocketMQConfigBuilder}. */
     void validate(Configuration configuration) {
         requiredOptions.forEach(
@@ -72,11 +77,6 @@ public class RocketMQConfigValidator {
                                     + "we only support one of them for creating rocketmq client.",
                             options);
                 });
-    }
-
-    /** Return the builder for building {@link RocketMQConfigValidator}. */
-    public static RocketMQConfigValidatorBuilder builder() {
-        return new RocketMQConfigValidatorBuilder();
     }
 
     /** Builder pattern for building {@link RocketMQConfigValidator}. */

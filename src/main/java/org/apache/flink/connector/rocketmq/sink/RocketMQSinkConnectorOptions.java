@@ -20,11 +20,11 @@ package org.apache.flink.connector.rocketmq.sink;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.connector.base.DeliveryGuarantee;
-import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
+import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 
 import java.time.Duration;
 
-public class RocketMQSinkOptions extends RocketMQOptions {
+public class RocketMQSinkConnectorOptions extends RocketMQConnectorOptions {
 
     // rocketmq client API config prefix.
     public static final String PRODUCER_PREFIX = "rocketmq.sink.";
@@ -33,12 +33,6 @@ public class RocketMQSinkOptions extends RocketMQOptions {
             ConfigOptions.key(PRODUCER_PREFIX + "group")
                     .stringType()
                     .defaultValue("PID-flink-producer");
-
-    public static final ConfigOption<String> TOPIC =
-            ConfigOptions.key(PRODUCER_PREFIX + "topic")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription("The name of the persist topic");
 
     public static final ConfigOption<String> SERIALIZE_FORMAT =
             ConfigOptions.key(PRODUCER_PREFIX + "serialize.format")
@@ -106,7 +100,7 @@ public class RocketMQSinkOptions extends RocketMQOptions {
             ConfigOptions.key("dynamicTagColumnWriteIncluded").booleanType().defaultValue(true);
 
     public static final ConfigOption<String> OPTIONAL_WRITE_KEY_COLUMNS =
-            ConfigOptions.key("keyColumns").stringType().noDefaultValue();
+            ConfigOptions.key("TRANSACTIONAL_ID_PREFIX").stringType().noDefaultValue();
 
     public static final ConfigOption<Boolean> OPTIONAL_WRITE_KEYS_TO_BODY =
             ConfigOptions.key("writeKeysToBody").booleanType().defaultValue(false);

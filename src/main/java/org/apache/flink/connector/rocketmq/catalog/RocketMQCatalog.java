@@ -79,8 +79,8 @@ import static org.apache.flink.util.StringUtils.isNullOrWhitespaceOnly;
 /** A catalog implementation for RocketMQ. */
 public class RocketMQCatalog extends AbstractCatalog {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RocketMQCatalog.class);
     public static final String DEFAULT_DB = "default";
+    private static final Logger LOG = LoggerFactory.getLogger(RocketMQCatalog.class);
     public final String namesrvAddr;
     private final String schemaRegistryUrl;
     private DefaultMQAdminExt mqAdminExt;

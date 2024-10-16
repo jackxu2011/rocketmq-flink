@@ -46,7 +46,7 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
     private final DescriptorProperties properties;
     private final TableSchema schema;
 
-    private final String topic;
+    private final List<String> topic;
     private final String producerGroup;
     private final String nameServerAddress;
     private final String tag;
@@ -71,7 +71,7 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
     public RocketMQDynamicTableSink(
             DescriptorProperties properties,
             TableSchema schema,
-            String topic,
+            List<String> topic,
             String producerGroup,
             String nameServerAddress,
             String tag,
@@ -108,7 +108,7 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
     public RocketMQDynamicTableSink(
             DescriptorProperties properties,
             TableSchema schema,
-            String topic,
+            List<String> topic,
             String producerGroup,
             String nameServerAddress,
             String accessKey,
@@ -141,6 +141,15 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
         this.writeKeysToBody = writeKeysToBody;
         this.keyColumns = keyColumns;
         this.metadataKeys = Collections.emptyList();
+    }
+
+    protected static RowTypeInfo convertToRowTypeInfo(
+            DataType fieldsDataType, String[] fieldNames) {
+        final TypeInformation<?>[] fieldTypes =
+                fieldsDataType.getChildren().stream()
+                        .map(LegacyTypeInfoDataTypeConverter::toLegacyTypeInfo)
+                        .toArray(TypeInformation[]::new);
+        return new RowTypeInfo(fieldTypes, fieldNames);
     }
 
     @Override
@@ -245,15 +254,6 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
             producerProps.setProperty(RocketMQConfig.SECRET_KEY, secretKey);
         }
         return producerProps;
-    }
-
-    protected static RowTypeInfo convertToRowTypeInfo(
-            DataType fieldsDataType, String[] fieldNames) {
-        final TypeInformation<?>[] fieldTypes =
-                fieldsDataType.getChildren().stream()
-                        .map(LegacyTypeInfoDataTypeConverter::toLegacyTypeInfo)
-                        .toArray(TypeInformation[]::new);
-        return new RowTypeInfo(fieldTypes, fieldNames);
     }
 
     // --------------------------------------------------------------------------------------------

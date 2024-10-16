@@ -21,77 +21,17 @@ package org.apache.flink.connector.rocketmq.source;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigValidator;
-import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
-import org.apache.flink.connector.rocketmq.legacy.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
+import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 
 /** Includes config options of RocketMQ connector type. */
-public class RocketMQSourceOptions extends RocketMQOptions {
+public class RocketMQSourceConnectorOptions extends RocketMQConnectorOptions {
 
     public static final RocketMQConfigValidator SOURCE_CONFIG_VALIDATOR =
             RocketMQConfigValidator.builder().build();
 
     // rocketmq source connector config prefix.
     public static final String CONSUMER_PREFIX = "rocketmq.source.";
-
-    public static final String TOPIC_SEPARATOR = ";";
-
-    public static final ConfigOption<String> CONSUMER_GROUP =
-            ConfigOptions.key(CONSUMER_PREFIX + "group")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "The name of the consumer group, used to identify a type of consumer");
-
-    public static final ConfigOption<String> TOPIC =
-            ConfigOptions.key(CONSUMER_PREFIX + "topic")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription("The name of the subscribe topic");
-
-    public static final ConfigOption<Boolean> OPTIONAL_USE_NEW_API =
-            ConfigOptions.key(CONSUMER_PREFIX + "api.new.enable").booleanType().defaultValue(true);
-
-    public static final ConfigOption<String> OPTIONAL_TAG =
-            ConfigOptions.key(CONSUMER_PREFIX + "filter.tag")
-                    .stringType()
-                    .defaultValue("*")
-                    .withDescription(
-                            "for message filter, rocketmq only support single filter option");
-
-    public static final ConfigOption<String> OPTIONAL_SQL =
-            ConfigOptions.key(CONSUMER_PREFIX + "filter.sql").stringType().noDefaultValue();
-
-    public static final ConfigOption<String> OPTIONAL_STARTUP_SCAN_MODE =
-            ConfigOptions.key(CONSUMER_PREFIX + "startup.scan.mode")
-                    .stringType()
-                    .defaultValue("latest");
-
-    /** for initialization consume offset */
-    public static final ConfigOption<Long> OPTIONAL_STARTUP_OFFSET_SPECIFIC =
-            ConfigOptions.key(CONSUMER_PREFIX + "startup.offset.specific")
-                    .longType()
-                    .defaultValue(RocketMQConfig.DEFAULT_START_MESSAGE_OFFSET);
-
-    public static final ConfigOption<String> OPTIONAL_STARTUP_OFFSET_STRATEGY =
-            ConfigOptions.key(CONSUMER_PREFIX + "startup.offset.strategy")
-                    .stringType()
-                    .noDefaultValue();
-
-    public static final ConfigOption<String> OPTIONAL_STARTUP_OFFSET_DATE =
-            ConfigOptions.key(CONSUMER_PREFIX + "startup.offset.date")
-                    .stringType()
-                    .noDefaultValue();
-
-    public static final ConfigOption<Long> OPTIONAL_STARTUP_OFFSET_TIMESTAMP =
-            ConfigOptions.key(CONSUMER_PREFIX + "startup.offset.timestamp")
-                    .longType()
-                    .defaultValue(RocketMQConfig.DEFAULT_START_MESSAGE_OFFSET);
-
-    public static final ConfigOption<String> OPTIONAL_STOP_OFFSET_TIMESTAMP =
-            ConfigOptions.key(CONSUMER_PREFIX + "stop.offset.timestamp")
-                    .stringType()
-                    .noDefaultValue();
 
     public static final ConfigOption<Boolean> OPTIONAL_COLUMN_ERROR_DEBUG =
             ConfigOptions.key(CONSUMER_PREFIX + "column.error.debug")

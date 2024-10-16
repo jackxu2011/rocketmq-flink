@@ -21,7 +21,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.apache.rocketmq.common.message.Message;
 
 public class SinkMapFunction extends ProcessFunction<Tuple2<String, String>, Message> {

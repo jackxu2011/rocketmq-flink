@@ -18,6 +18,7 @@
 package org.apache.flink.connector.rocketmq.source.reader;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.SourceReaderBase;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
@@ -57,7 +58,7 @@ public class RocketMQSourceFetcherManager
             Supplier<SplitReader<MessageView, RocketMQSourceSplit>> splitReaderSupplier,
             Consumer<Collection<String>> splitFinishedHook) {
 
-        super(elementsQueue, splitReaderSupplier, splitFinishedHook);
+        super(elementsQueue, splitReaderSupplier, new Configuration(), splitFinishedHook);
     }
 
     public void commitOffsets(Map<MessageQueue, Long> offsetsToCommit) {

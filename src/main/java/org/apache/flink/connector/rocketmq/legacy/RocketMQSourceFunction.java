@@ -50,8 +50,8 @@ import org.apache.flink.shaded.curator5.com.google.common.util.concurrent.Thread
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.map.LinkedMap;
-import org.apache.commons.lang.Validate;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.consumer.MessageSelector;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -537,7 +537,8 @@ public class RocketMQSourceFunction<OUT> extends RichParallelSourceFunction<OUT>
         }
     }
 
-    public void initOffsetTableFromRestoredOffsets(List<MessageQueue> messageQueues) throws MQClientException {
+    public void initOffsetTableFromRestoredOffsets(List<MessageQueue> messageQueues)
+            throws MQClientException {
         Preconditions.checkNotNull(restoredOffsets, "restoredOffsets can't be null");
         restoredOffsets.forEach(
                 (mq, offset) -> {

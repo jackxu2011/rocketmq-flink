@@ -94,13 +94,6 @@ public interface MessageView {
     int getDeliveryAttempt();
 
     /**
-     * Get the event time of the message, which is used for filtering and sorting.
-     *
-     * @return the event time
-     */
-    long getEventTime();
-
-    /**
      * Get the ingestion time of the message, which is the time that the message was received by the
      * broker.
      *

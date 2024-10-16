@@ -33,32 +33,6 @@ import java.io.Serializable;
 public interface RocketMQDeserializationSchema<T> extends Serializable, ResultTypeQueryable<T> {
 
     /**
-     * Initialization method for the schema. It is called before the actual working methods {@link
-     * #deserialize} and thus suitable for one time setup work.
-     *
-     * <p>The provided {@link InitializationContext} can be used to access additional features such
-     * as e.g. registering user metrics.
-     *
-     * @param context Contextual information that can be used during initialization.
-     */
-    default void open(DeserializationSchema.InitializationContext context) throws Exception {
-        // Nothing to do here for the default implementation.
-    }
-
-    /**
-     * Deserializes the byte message.
-     *
-     * <p>Can output multiple records through the {@link Collector}. Note that number and size of
-     * the produced records should be relatively small. Depending on the source implementation
-     * records can be buffered in memory or collecting records might delay emitting checkpoint
-     * barrier.
-     *
-     * @param messageView The MessageView to deserialize.
-     * @param out The collector to put the resulting messages.
-     */
-    void deserialize(MessageView messageView, Collector<T> out) throws IOException;
-
-    /**
      * Create a RocketMQDeserializationSchema by using the flink's {@link DeserializationSchema}. It
      * would consume the rocketmq message as byte array and decode the message by using flink's
      * logic.
@@ -85,4 +59,30 @@ public interface RocketMQDeserializationSchema<T> extends Serializable, ResultTy
             DeserializationSchema<T> valueDeserializationSchema) {
         return new RocketMQDeserializationSchemaWrapper<>(valueDeserializationSchema);
     }
+
+    /**
+     * Initialization method for the schema. It is called before the actual working methods {@link
+     * #deserialize} and thus suitable for one time setup work.
+     *
+     * <p>The provided {@link InitializationContext} can be used to access additional features such
+     * as e.g. registering user metrics.
+     *
+     * @param context Contextual information that can be used during initialization.
+     */
+    default void open(DeserializationSchema.InitializationContext context) throws Exception {
+        // Nothing to do here for the default implementation.
+    }
+
+    /**
+     * Deserializes the byte message.
+     *
+     * <p>Can output multiple records through the {@link Collector}. Note that number and size of
+     * the produced records should be relatively small. Depending on the source implementation
+     * records can be buffered in memory or collecting records might delay emitting checkpoint
+     * barrier.
+     *
+     * @param messageView The MessageView to deserialize.
+     * @param out The collector to put the resulting messages.
+     */
+    void deserialize(MessageView messageView, Collector<T> out) throws IOException;
 }

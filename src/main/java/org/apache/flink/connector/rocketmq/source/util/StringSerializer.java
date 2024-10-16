@@ -20,7 +20,6 @@ package org.apache.flink.connector.rocketmq.source.util;
 import org.apache.flink.table.data.DecimalData;
 import org.apache.flink.table.data.binary.BinaryStringData;
 import org.apache.flink.table.data.util.DataFormatConverters;
-import org.apache.flink.table.data.util.DataFormatConverters.TimestampConverter;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.DecimalType;
 
@@ -35,8 +34,9 @@ import java.util.Set;
 /** String serializer. */
 public class StringSerializer {
 
-    public static TimestampConverter timestampConverter = new TimestampConverter(3);
     private static final Base64.Decoder DECODER = Base64.getDecoder();
+    public static DataFormatConverters.TimestampConverter timestampConverter =
+            new DataFormatConverters.TimestampConverter(3);
 
     public static Object deserialize(
             String value,

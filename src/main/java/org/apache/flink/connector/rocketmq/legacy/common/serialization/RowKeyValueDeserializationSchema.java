@@ -50,8 +50,7 @@ public class RowKeyValueDeserializationSchema implements KeyValueDeserialization
     private static final long serialVersionUID = -1L;
     private static final Logger LOGGER =
             LoggerFactory.getLogger(RowKeyValueDeserializationSchema.class);
-
-    private transient TableSchema tableSchema;
+    private static final int DEFAULT_LOG_INTERVAL_MS = 60 * 1000;
     private final DirtyDataStrategy formatErrorStrategy;
     private final DirtyDataStrategy fieldMissingStrategy;
     private final DirtyDataStrategy fieldIncrementStrategy;
@@ -62,10 +61,9 @@ public class RowKeyValueDeserializationSchema implements KeyValueDeserialization
     private final ByteSerializer.ValueType[] fieldTypes;
     private final transient DataType[] fieldDataTypes;
     private final Map<String, Integer> columnIndexMapping;
+    private transient TableSchema tableSchema;
     private long lastLogExceptionTime;
     private long lastLogHandleFieldTime;
-
-    private static final int DEFAULT_LOG_INTERVAL_MS = 60 * 1000;
 
     public RowKeyValueDeserializationSchema(
             TableSchema tableSchema,

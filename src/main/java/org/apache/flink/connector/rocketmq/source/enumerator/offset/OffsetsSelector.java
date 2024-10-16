@@ -38,49 +38,6 @@ import java.util.Map;
 public interface OffsetsSelector extends Serializable {
 
     /**
-     * This method retrieves the current offsets for a collection of {@link MessageQueue}s using a
-     * provided {@link MessageQueueOffsetsRetriever}.
-     *
-     * @param messageQueues the collection of queues for which to retrieve the offsets
-     * @param offsetsRetriever the offsets retriever to use for obtaining the offsets
-     * @return a mapping of {@link MessageQueue}s to their current offsets
-     */
-    Map<MessageQueue, Long> getMessageQueueOffsets(
-            Collection<MessageQueue> messageQueues, MessageQueueOffsetsRetriever offsetsRetriever);
-
-    /**
-     * Returns the strategy for automatically resetting the offset when there is no initial offset
-     * in RocketMQ or if the current offset does not exist in RocketMQ.
-     *
-     * @return strategy for automatically resetting the offset
-     */
-    OffsetResetStrategy getAutoOffsetResetStrategy();
-
-    /**
-     * An interface that provides necessary information to the {@link OffsetsSelector} to get the
-     * initial offsets of the RocketMQ message queues.
-     */
-    interface MessageQueueOffsetsRetriever {
-
-        /**
-         * The group id should be the set for {@link RocketMQSource } before invoking this method.
-         * Otherwise, an {@code IllegalStateException} will be thrown.
-         */
-        Map<MessageQueue, Long> committedOffsets(Collection<MessageQueue> messageQueues);
-
-        /** List min offsets for the specified MessageQueues. */
-        Map<MessageQueue, Long> minOffsets(Collection<MessageQueue> messageQueues);
-
-        /** List max offsets for the specified MessageQueues. */
-        Map<MessageQueue, Long> maxOffsets(Collection<MessageQueue> messageQueues);
-
-        /** List max offsets for the specified MessageQueues. */
-        Map<MessageQueue, Long> offsetsForTimes(Map<MessageQueue, Long> messageQueueWithTimeMap);
-    }
-
-    // --------------- factory methods ---------------
-
-    /**
      * Get an {@link OffsetsSelector} which initializes the offsets to the committed offsets. An
      * exception will be thrown at runtime if there is no committed offsets.
      *
@@ -116,6 +73,8 @@ public interface OffsetsSelector extends Serializable {
     static OffsetsSelector timestamp(long timestamp) {
         return new OffsetsSelectorByTimestamp(timestamp);
     }
+
+    // --------------- factory methods ---------------
 
     /**
      * Get an {@link OffsetsSelector} which initializes the offsets to the earliest available
@@ -164,5 +123,46 @@ public interface OffsetsSelector extends Serializable {
     static OffsetsSelector offsets(
             Map<MessageQueue, Long> offsets, OffsetResetStrategy offsetResetStrategy) {
         return new OffsetsSelectorBySpecified(offsets, offsetResetStrategy);
+    }
+
+    /**
+     * This method retrieves the current offsets for a collection of {@link MessageQueue}s using a
+     * provided {@link MessageQueueOffsetsRetriever}.
+     *
+     * @param messageQueues the collection of queues for which to retrieve the offsets
+     * @param offsetsRetriever the offsets retriever to use for obtaining the offsets
+     * @return a mapping of {@link MessageQueue}s to their current offsets
+     */
+    Map<MessageQueue, Long> getMessageQueueOffsets(
+            Collection<MessageQueue> messageQueues, MessageQueueOffsetsRetriever offsetsRetriever);
+
+    /**
+     * Returns the strategy for automatically resetting the offset when there is no initial offset
+     * in RocketMQ or if the current offset does not exist in RocketMQ.
+     *
+     * @return strategy for automatically resetting the offset
+     */
+    OffsetResetStrategy getAutoOffsetResetStrategy();
+
+    /**
+     * An interface that provides necessary information to the {@link OffsetsSelector} to get the
+     * initial offsets of the RocketMQ message queues.
+     */
+    interface MessageQueueOffsetsRetriever {
+
+        /**
+         * The group id should be the set for {@link RocketMQSource } before invoking this method.
+         * Otherwise, an {@code IllegalStateException} will be thrown.
+         */
+        Map<MessageQueue, Long> committedOffsets(Collection<MessageQueue> messageQueues);
+
+        /** List min offsets for the specified MessageQueues. */
+        Map<MessageQueue, Long> minOffsets(Collection<MessageQueue> messageQueues);
+
+        /** List max offsets for the specified MessageQueues. */
+        Map<MessageQueue, Long> maxOffsets(Collection<MessageQueue> messageQueues);
+
+        /** List max offsets for the specified MessageQueues. */
+        Map<MessageQueue, Long> offsetsForTimes(Map<MessageQueue, Long> messageQueueWithTimeMap);
     }
 }
