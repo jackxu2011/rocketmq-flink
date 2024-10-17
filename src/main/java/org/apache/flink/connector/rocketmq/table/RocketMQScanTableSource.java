@@ -27,9 +27,9 @@ import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelec
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelectorNoStopping;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
-import org.apache.flink.connector.rocketmq.table.config.BoundedMode;
 import org.apache.flink.connector.rocketmq.table.config.BoundedOptions;
 import org.apache.flink.connector.rocketmq.table.config.StartupOptions;
+import org.apache.flink.connector.rocketmq.table.serialization.RocketMQDynamicDeserializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -46,8 +46,6 @@ import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
-
-import org.apache.rocketmq.acl.common.SessionCredentials;
 
 import javax.annotation.Nullable;
 
@@ -105,8 +103,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
     private final String consumerGroup;
     private final String tag;
 
-    private final String nameServerAddress;
-    private final SessionCredentials credentials;
+    private final String endpoints;
 
     /** Properties for the RocketMQ consumer. */
     protected final Properties properties;
@@ -128,8 +125,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
             @Nullable List<String> topics,
             @Nullable String group,
             @Nullable String tag,
-            String nameServerAddress,
-            @Nullable SessionCredentials credentials,
+            String endpoints,
             Properties properties,
             StartupOptions startupOptions,
             BoundedOptions boundedOptions,
@@ -155,8 +151,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
         this.topics = Preconditions.checkNotNull(topics, "Topic must not be null.");
         this.consumerGroup = group;
         this.tag = tag;
-        this.nameServerAddress = nameServerAddress;
-        this.credentials = credentials;
+        this.endpoints = endpoints;
         this.properties = Preconditions.checkNotNull(properties, "Properties must not be null.");
         this.startupOptions =
                 Preconditions.checkNotNull(startupOptions, "Startup options must not be null.");
@@ -178,7 +173,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
         final TypeInformation<RowData> producedTypeInfo =
                 context.createTypeInformation(producedDataType);
 
-        final RocketMQSource<RowData> kafkaSource =
+        final RocketMQSource<RowData> rocketMQSource =
                 createRocketMQSource(valueDeserialization, producedTypeInfo);
 
         return new DataStreamScanProvider() {
@@ -188,7 +183,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
 
                 DataStreamSource<RowData> sourceStream =
                         execEnv.fromSource(
-                                kafkaSource,
+                                rocketMQSource,
                                 WatermarkStrategy.noWatermarks(),
                                 "RocketMQSource-" + tableIdentifier);
                 providerContext.generateUid(ROCKETMQ_TRANSFORMATION).ifPresent(sourceStream::uid);
@@ -197,7 +192,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
 
             @Override
             public boolean isBounded() {
-                return kafkaSource.getBoundedness() == Boundedness.BOUNDED;
+                return rocketMQSource.getBoundedness() == Boundedness.BOUNDED;
             }
         };
     }
@@ -212,19 +207,20 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
         final RocketMQSourceBuilder<RowData> rocketMQSourceBuilder = RocketMQSource.builder();
 
         rocketMQSourceBuilder.setTopics(topics);
-
+        rocketMQSourceBuilder.setGroupId(consumerGroup);
+        rocketMQSourceBuilder.setEndpoints(endpoints);
         switch (startupOptions.startupMode) {
             case EARLIEST:
-                rocketMQSourceBuilder.setMinOffsets(OffsetsSelector.earliest());
+                rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.earliest());
                 break;
             case LATEST:
-                rocketMQSourceBuilder.setMinOffsets(OffsetsSelector.latest());
+                rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.latest());
                 break;
             case GROUP_OFFSETS:
-                rocketMQSourceBuilder.setMinOffsets(OffsetsSelector.committedOffsets());
+                rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.committedOffsets());
                 break;
             case TIMESTAMP:
-                rocketMQSourceBuilder.setMinOffsets(
+                rocketMQSourceBuilder.setStartingOffsets(
                         OffsetsSelector.timestamp(startupOptions.startupTimestampMillis));
                 break;
         }
@@ -286,8 +282,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
                         topics,
                         consumerGroup,
                         tag,
-                        nameServerAddress,
-                        credentials,
+                        endpoints,
                         properties,
                         startupOptions,
                         boundedOptions,
@@ -299,10 +294,6 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
     @Override
     public String asSummaryString() {
         return RocketMQScanTableSource.class.getName();
-    }
-
-    private boolean isBounded() {
-        return BoundedMode.UNBOUNDED != boundedOptions.boundedMode;
     }
 
     private RocketMQDeserializationSchema<RowData> createRocketMQDeserializationSchema(
@@ -320,7 +311,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
                         .toArray(RocketMQDynamicDeserializationSchema.MetadataConverter[]::new);
 
         // check if connector metadata is used at all
-        final boolean hasMetadata = metadataKeys.size() > 0;
+        final boolean hasMetadata = !metadataKeys.isEmpty();
 
         // adjust physical arity with value format's metadata
         final int adjustedPhysicalArity =

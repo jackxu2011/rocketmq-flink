@@ -19,7 +19,7 @@
 package org.apache.flink.connector.rocketmq.source.table;
 
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions;
+import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSourceFactory;
 import org.apache.flink.connector.rocketmq.table.RocketMQScanTableSource;
 import org.apache.flink.table.api.Schema;
@@ -83,10 +83,10 @@ public class RocketMQDynamicTableSourceFactoryTest {
     public void testRocketMQDynamicTableSourceWithLegalOption() {
         final Map<String, String> options = new HashMap<>();
         options.put("connector", IDENTIFIER);
-        options.put(RocketMQSourceConnectorOptions.TOPIC.key(), TOPIC);
-        options.put(RocketMQSourceConnectorOptions.GROUP.key(), CONSUMER_GROUP);
+        options.put(RocketMQConnectorOptions.TOPIC.key(), TOPIC);
+        options.put(RocketMQConnectorOptions.GROUP.key(), CONSUMER_GROUP);
         options.put(
-                RocketMQSourceConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS.key(),
+                RocketMQConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS.key(),
                 String.valueOf(System.currentTimeMillis()));
         final DynamicTableSource tableSource = createTableSource(options);
         assertTrue(tableSource instanceof RocketMQScanTableSource);
@@ -98,17 +98,17 @@ public class RocketMQDynamicTableSourceFactoryTest {
     public void testRocketMQDynamicTableSourceWithoutRequiredOption() {
         final Map<String, String> options = new HashMap<>();
         options.put("connector", IDENTIFIER);
-        options.put(RocketMQSourceConnectorOptions.TOPIC.key(), TOPIC);
-        options.put(RocketMQSourceConnectorOptions.GROUP.key(), CONSUMER_GROUP);
-        options.put(RocketMQSourceConnectorOptions.SCAN_FILTER_TAG.key(), "test_tag");
+        options.put(RocketMQConnectorOptions.TOPIC.key(), TOPIC);
+        options.put(RocketMQConnectorOptions.GROUP.key(), CONSUMER_GROUP);
+        options.put(RocketMQConnectorOptions.SCAN_FILTER_TAG.key(), "test_tag");
         createTableSource(options);
     }
 
     @Test(expected = ValidationException.class)
     public void testRocketMQDynamicTableSourceWithUnknownOption() {
         final Map<String, String> options = new HashMap<>();
-        options.put(RocketMQSourceConnectorOptions.TOPIC.key(), TOPIC);
-        options.put(RocketMQSourceConnectorOptions.GROUP.key(), CONSUMER_GROUP);
+        options.put(RocketMQConnectorOptions.TOPIC.key(), TOPIC);
+        options.put(RocketMQConnectorOptions.GROUP.key(), CONSUMER_GROUP);
         // options.put(RocketMQSourceOptions.PERSIST_OFFSET_INTERVAL.key(), NAME_SERVER_ADDRESS);
         options.put("unknown", "test_option");
         createTableSource(options);

@@ -1,9 +1,10 @@
-package org.apache.flink.connector.rocketmq.table;
+package org.apache.flink.connector.rocketmq.table.serialization;
 
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
+import org.apache.flink.connector.rocketmq.table.RocketMQScanTableSource;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.types.DeserializationException;
@@ -74,7 +75,7 @@ public class RocketMQDynamicDeserializationSchema
 
     // --------------------------------------------------------------------------------------------
 
-    interface MetadataConverter extends Serializable {
+    public interface MetadataConverter extends Serializable {
         Object read(MessageView record);
     }
 

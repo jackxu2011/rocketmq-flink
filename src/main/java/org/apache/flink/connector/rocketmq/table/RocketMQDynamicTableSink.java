@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.rocketmq.sink.table;
+package org.apache.flink.connector.rocketmq.table;
 
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.connector.rocketmq.legacy.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.legacy.RocketMQSink;
+import org.apache.flink.connector.rocketmq.sink.table.RocketMQRowDataConverter;
+import org.apache.flink.connector.rocketmq.sink.table.RocketMQRowDataSink;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.ChangelogMode;
@@ -51,11 +53,6 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
     private final String nameServerAddress;
     private final String tag;
     private final String dynamicColumn;
-    private final String fieldDelimiter;
-    private final String encoding;
-
-    private final String accessKey;
-    private final String secretKey;
 
     private final long retryTimes;
     private final long sleepTime;
@@ -76,47 +73,6 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
             String nameServerAddress,
             String tag,
             String dynamicColumn,
-            String fieldDelimiter,
-            String encoding,
-            long retryTimes,
-            long sleepTime,
-            boolean isDynamicTag,
-            boolean isDynamicTagIncluded,
-            boolean writeKeysToBody,
-            String[] keyColumns) {
-
-        this(
-                properties,
-                schema,
-                topic,
-                producerGroup,
-                nameServerAddress,
-                null,
-                null,
-                tag,
-                dynamicColumn,
-                fieldDelimiter,
-                encoding,
-                retryTimes,
-                sleepTime,
-                isDynamicTag,
-                isDynamicTagIncluded,
-                writeKeysToBody,
-                keyColumns);
-    }
-
-    public RocketMQDynamicTableSink(
-            DescriptorProperties properties,
-            TableSchema schema,
-            List<String> topic,
-            String producerGroup,
-            String nameServerAddress,
-            String accessKey,
-            String secretKey,
-            String tag,
-            String dynamicColumn,
-            String fieldDelimiter,
-            String encoding,
             long retryTimes,
             long sleepTime,
             boolean isDynamicTag,
@@ -128,12 +84,8 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
         this.topic = topic;
         this.producerGroup = producerGroup;
         this.nameServerAddress = nameServerAddress;
-        this.accessKey = accessKey;
-        this.secretKey = secretKey;
         this.tag = tag;
         this.dynamicColumn = dynamicColumn;
-        this.fieldDelimiter = fieldDelimiter;
-        this.encoding = encoding;
         this.retryTimes = retryTimes;
         this.sleepTime = sleepTime;
         this.isDynamicTag = isDynamicTag;
@@ -191,12 +143,8 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
                         topic,
                         producerGroup,
                         nameServerAddress,
-                        accessKey,
-                        secretKey,
                         tag,
                         dynamicColumn,
-                        fieldDelimiter,
-                        encoding,
                         retryTimes,
                         sleepTime,
                         isDynamicTag,
@@ -232,8 +180,8 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
                 topic,
                 tag,
                 dynamicColumn,
-                fieldDelimiter,
-                encoding,
+                null,
+                null,
                 isDynamicTag,
                 isDynamicTagIncluded,
                 writeKeysToBody,
@@ -249,10 +197,6 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
         producerProps.setProperty(RocketMQConfig.PRODUCER_GROUP, producerGroup);
         producerProps.setProperty(RocketMQConfig.NAME_SERVER_ADDR, nameServerAddress);
         producerProps.setProperty(RocketMQConfig.PRODUCER_RETRY_TIMES, String.valueOf(retryTimes));
-        if (accessKey != null && secretKey != null) {
-            producerProps.setProperty(RocketMQConfig.ACCESS_KEY, accessKey);
-            producerProps.setProperty(RocketMQConfig.SECRET_KEY, secretKey);
-        }
         return producerProps;
     }
 
@@ -260,7 +204,7 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
     // Metadata handling
     // --------------------------------------------------------------------------------------------
 
-    enum WritableMetadata {
+    public enum WritableMetadata {
         KEYS(
                 "keys",
                 DataTypes.STRING().nullable(),
@@ -295,7 +239,7 @@ public class RocketMQDynamicTableSink implements DynamicTableSink, SupportsWriti
 
         final DataType dataType;
 
-        final RocketMQRowDataConverter.MetadataConverter converter;
+        public final RocketMQRowDataConverter.MetadataConverter converter;
 
         WritableMetadata(
                 String key,

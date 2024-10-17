@@ -18,7 +18,9 @@
 package org.apache.flink.connector.rocketmq.sink;
 
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.connector.rocketmq.sink.committer.SendCommittable;
+import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.util.StringUtils;
 
 import com.google.common.util.concurrent.MoreExecutors;
@@ -64,12 +66,10 @@ public class InnerProducerImpl implements InnerProducer {
     public InnerProducerImpl(Configuration configuration) {
         this.configuration = configuration;
         this.groupId = configuration.getString(RocketMQSinkConnectorOptions.PRODUCER_GROUP);
-        this.endPoints = configuration.getString(RocketMQSinkConnectorOptions.ENDPOINTS);
+        this.endPoints = configuration.getString(RocketMQConnectorOptions.ENDPOINTS);
 
-        String accessKey =
-                configuration.getString(RocketMQSinkConnectorOptions.OPTIONAL_ACCESS_KEY);
-        String secretKey =
-                configuration.getString(RocketMQSinkConnectorOptions.OPTIONAL_SECRET_KEY);
+        String accessKey = configuration.getString(RocketMQOptions.ACCESS_KEY);
+        String secretKey = configuration.getString(RocketMQOptions.SECRET_KEY);
 
         if (!StringUtils.isNullOrWhitespaceOnly(accessKey)
                 && !StringUtils.isNullOrWhitespaceOnly(secretKey)) {

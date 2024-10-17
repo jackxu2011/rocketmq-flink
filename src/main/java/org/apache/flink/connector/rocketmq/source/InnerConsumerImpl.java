@@ -19,10 +19,12 @@ package org.apache.flink.connector.rocketmq.source;
 
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.MessageViewExt;
 import org.apache.flink.connector.rocketmq.source.util.UtilAll;
+import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.util.FlinkRuntimeException;
 import org.apache.flink.util.StringUtils;
 
@@ -69,10 +71,8 @@ public class InnerConsumerImpl implements InnerConsumer {
         this.configuration = configuration;
         this.commonExecutorService = buildExecutorService(configuration);
 
-        String accessKey =
-                configuration.getString(RocketMQSourceConnectorOptions.OPTIONAL_ACCESS_KEY);
-        String secretKey =
-                configuration.getString(RocketMQSourceConnectorOptions.OPTIONAL_SECRET_KEY);
+        String accessKey = configuration.get(RocketMQOptions.ACCESS_KEY);
+        String secretKey = configuration.get(RocketMQOptions.SECRET_KEY);
 
         // Note: sync pull thread num may not enough
         if (!StringUtils.isNullOrWhitespaceOnly(accessKey)
@@ -86,8 +86,8 @@ public class InnerConsumerImpl implements InnerConsumer {
             this.consumer = new DefaultLitePullConsumer();
         }
 
-        String groupId = configuration.getString(RocketMQSourceConnectorOptions.GROUP);
-        String endPoints = configuration.getString(RocketMQSourceConnectorOptions.ENDPOINTS);
+        String groupId = configuration.get(RocketMQConnectorOptions.GROUP);
+        String endPoints = configuration.get(RocketMQConnectorOptions.ENDPOINTS);
 
         this.consumer.setNamesrvAddr(endPoints);
         this.consumer.setConsumerGroup(groupId);
@@ -135,9 +135,7 @@ public class InnerConsumerImpl implements InnerConsumer {
 
     private ExecutorService buildExecutorService(Configuration configuration) {
         int processors = Runtime.getRuntime().availableProcessors();
-        int threadNum =
-                configuration.getInteger(
-                        RocketMQSourceConnectorOptions.PULL_THREADS_NUM, processors);
+        int threadNum = configuration.get(RocketMQSourceOptions.PULL_THREADS_NUM, processors);
         return new ThreadPoolExecutor(
                 threadNum,
                 threadNum,
@@ -149,7 +147,7 @@ public class InnerConsumerImpl implements InnerConsumer {
 
     @Override
     public String getConsumerGroup() {
-        return configuration.getString(RocketMQSourceConnectorOptions.GROUP);
+        return configuration.get(RocketMQConnectorOptions.GROUP);
     }
 
     @Override

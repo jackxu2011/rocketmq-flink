@@ -28,11 +28,12 @@ import org.apache.flink.api.connector.source.SplitsAssignment;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.source.InnerConsumer;
 import org.apache.flink.connector.rocketmq.source.InnerConsumerImpl;
-import org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions;
+import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategy;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.util.FlinkRuntimeException;
 
 import com.alibaba.fastjson.JSON;
@@ -114,12 +115,11 @@ public class RocketMQSourceEnumerator
                         configuration, context, new RocketMQSourceEnumState(allocatedSet));
 
         // For rocketmq setting
-        this.groupId = configuration.getString(RocketMQSourceConnectorOptions.GROUP);
+        this.groupId = configuration.get(RocketMQConnectorOptions.GROUP);
         this.startingOffsetsSelector = startingOffsetsSelector;
         this.stoppingOffsetsSelector = stoppingOffsetsSelector;
         this.partitionDiscoveryIntervalMs =
-                configuration.getLong(
-                        RocketMQSourceConnectorOptions.PARTITION_DISCOVERY_INTERVAL_MS);
+                configuration.get(RocketMQSourceOptions.PARTITION_DISCOVERY_INTERVAL_MS);
     }
 
     @Override
@@ -210,7 +210,7 @@ public class RocketMQSourceEnumerator
         Set<String> topicSet =
                 Sets.newHashSet(
                         configuration
-                                .getOptional(RocketMQSourceConnectorOptions.TOPIC)
+                                .getOptional(RocketMQConnectorOptions.TOPIC)
                                 .orElseGet(Collections::emptyList));
 
         return topicSet.stream()

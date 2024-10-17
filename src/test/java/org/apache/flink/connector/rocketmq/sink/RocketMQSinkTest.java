@@ -111,12 +111,6 @@ public class RocketMQSinkTest {
                 RocketMQSink.<String>builder()
                         .setEndpoints(ConnectorConfig.ENDPOINTS)
                         .setGroupId(ConnectorConfig.PRODUCER_GROUP)
-                        .setConfig(
-                                RocketMQSinkConnectorOptions.OPTIONAL_ACCESS_KEY,
-                                ConnectorConfig.ACCESS_KEY)
-                        .setConfig(
-                                RocketMQSinkConnectorOptions.OPTIONAL_SECRET_KEY,
-                                ConnectorConfig.SECRET_KEY)
                         .setSerializer(
                                 (RocketMQSerializationSchema<String>)
                                         (element, context, timestamp) -> {

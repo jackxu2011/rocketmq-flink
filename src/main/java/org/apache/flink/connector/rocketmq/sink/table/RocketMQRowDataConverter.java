@@ -35,9 +35,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.apache.flink.connector.rocketmq.sink.table.RocketMQDynamicTableSink.WritableMetadata;
-import static org.apache.flink.connector.rocketmq.sink.table.RocketMQDynamicTableSink.WritableMetadata.KEYS;
-import static org.apache.flink.connector.rocketmq.sink.table.RocketMQDynamicTableSink.WritableMetadata.TAGS;
+import static org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSink.WritableMetadata;
+import static org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSink.WritableMetadata.KEYS;
+import static org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSink.WritableMetadata.TAGS;
 import static org.apache.flink.util.Preconditions.checkState;
 
 /** RocketMQRowDataConverter converts the row data of table to RocketMQ message pattern. */
@@ -207,7 +207,7 @@ public class RocketMQRowDataConverter implements Serializable {
 
     // --------------------------------------------------------------------------------------------
 
-    interface MetadataConverter extends Serializable {
+    public interface MetadataConverter extends Serializable {
         Object read(RowData consumedRow, int pos);
     }
 }

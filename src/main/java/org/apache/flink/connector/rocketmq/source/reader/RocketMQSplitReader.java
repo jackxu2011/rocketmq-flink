@@ -28,7 +28,7 @@ import org.apache.flink.connector.base.source.reader.splitreader.SplitsAddition;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.rocketmq.source.InnerConsumer;
 import org.apache.flink.connector.rocketmq.source.InnerConsumerImpl;
-import org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions;
+import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.metrics.RocketMQSourceReaderMetrics;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -96,18 +95,17 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
 
         this.rocketmqSourceReaderMetrics = rocketmqSourceReaderMetrics;
         this.commitOffsetsOnCheckpoint =
-                configuration.getBoolean(RocketMQConnectorOptions.COMMIT_OFFSETS_ON_CHECKPOINT);
+                configuration.get(RocketMQSourceOptions.COMMIT_OFFSETS_ON_CHECKPOINT);
     }
 
     @Override
-    public RecordsWithSplitIds<MessageView> fetch() throws IOException {
+    public RecordsWithSplitIds<MessageView> fetch() {
         wakeup = false;
         RocketMQRecordsWithSplitIds<MessageView> recordsWithSplitIds =
                 new RocketMQRecordsWithSplitIds<>(rocketmqSourceReaderMetrics);
         try {
             Duration duration =
-                    Duration.ofMillis(
-                            this.configuration.getLong(RocketMQConnectorOptions.POLL_TIMEOUT));
+                    Duration.ofMillis(this.configuration.get(RocketMQSourceOptions.POLL_TIMEOUT));
             List<MessageView> messageExtList = consumer.poll(duration);
             for (MessageView messageView : messageExtList) {
                 String splitId =
@@ -117,8 +115,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
                                         messageView.getBrokerName(),
                                         messageView.getQueueId()));
                 recordsWithSplitIds.recordsForSplit(splitId).add(messageView);
-                if (this.configuration.getBoolean(
-                        RocketMQSourceConnectorOptions.GLOBAL_DEBUG_MODE)) {
+                if (this.configuration.get(RocketMQConnectorOptions.GLOBAL_DEBUG_MODE)) {
                     LOG.info(
                             "Reader fetch splitId: {}, messageId: {}",
                             splitId,

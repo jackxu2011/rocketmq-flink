@@ -26,6 +26,7 @@ import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigBuilder;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelectorNoStopping;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
+import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import static org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions.SOURCE_CONFIG_VALIDATOR;
+import static org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions.SOURCE_CONFIG_VALIDATOR;
 
 @PublicEvolving
 public class RocketMQSourceBuilder<OUT> {
@@ -45,8 +46,8 @@ public class RocketMQSourceBuilder<OUT> {
     protected final RocketMQConfigBuilder configBuilder;
 
     // Users can specify the starting / stopping offset initializer.
-    private OffsetsSelector minOffsetsSelector;
-    private OffsetsSelector maxOffsetsSelector;
+    private OffsetsSelector startingOffsetSelector;
+    private OffsetsSelector stoppingOffsetsSelector;
 
     // Boundedness
     private Boundedness boundedness;
@@ -56,7 +57,7 @@ public class RocketMQSourceBuilder<OUT> {
 
     public RocketMQSourceBuilder() {
         this.configBuilder = new RocketMQConfigBuilder();
-        this.setMinOffsets(OffsetsSelector.committedOffsets());
+        this.setStartingOffsets(OffsetsSelector.committedOffsets());
         this.setUnbounded(new OffsetsSelectorNoStopping());
     }
 
@@ -67,7 +68,7 @@ public class RocketMQSourceBuilder<OUT> {
      * @return this RocketMQSourceBuilder.
      */
     public RocketMQSourceBuilder<OUT> setEndpoints(String endpoints) {
-        this.configBuilder.set(RocketMQSourceConnectorOptions.ENDPOINTS, endpoints);
+        this.configBuilder.set(RocketMQConnectorOptions.ENDPOINTS, endpoints);
         return this;
     }
 
@@ -78,7 +79,7 @@ public class RocketMQSourceBuilder<OUT> {
      * @return this RocketMQSourceBuilder.
      */
     public RocketMQSourceBuilder<OUT> setGroupId(String groupId) {
-        this.configBuilder.set(RocketMQSourceConnectorOptions.GROUP, groupId);
+        this.configBuilder.set(RocketMQConnectorOptions.GROUP, groupId);
         return this;
     }
 
@@ -90,7 +91,7 @@ public class RocketMQSourceBuilder<OUT> {
      * @return this RocketMQSourceBuilder.
      */
     public RocketMQSourceBuilder<OUT> setTopics(List<String> topics) {
-        this.configBuilder.set(RocketMQSourceConnectorOptions.TOPIC, topics);
+        this.configBuilder.set(RocketMQConnectorOptions.TOPIC, topics);
         return this;
     }
 
@@ -105,20 +106,20 @@ public class RocketMQSourceBuilder<OUT> {
         return this.setTopics(Arrays.asList(topics));
     }
 
-    public RocketMQSourceBuilder<OUT> setMinOffsets(OffsetsSelector offsetsSelector) {
-        this.minOffsetsSelector = offsetsSelector;
+    public RocketMQSourceBuilder<OUT> setStartingOffsets(OffsetsSelector offsetsSelector) {
+        this.startingOffsetSelector = offsetsSelector;
         return this;
     }
 
     public RocketMQSourceBuilder<OUT> setUnbounded(OffsetsSelector stoppingOffsetsSelector) {
         this.boundedness = Boundedness.CONTINUOUS_UNBOUNDED;
-        this.maxOffsetsSelector = stoppingOffsetsSelector;
+        this.stoppingOffsetsSelector = stoppingOffsetsSelector;
         return this;
     }
 
     public RocketMQSourceBuilder<OUT> setBounded(OffsetsSelector stoppingOffsetsSelector) {
         this.boundedness = Boundedness.BOUNDED;
-        this.maxOffsetsSelector = stoppingOffsetsSelector;
+        this.stoppingOffsetsSelector = stoppingOffsetsSelector;
         return this;
     }
 
@@ -137,8 +138,7 @@ public class RocketMQSourceBuilder<OUT> {
 
     /**
      * Set an arbitrary property for the RocketMQ source. The valid keys can be found in {@link
-     * RocketMQSourceConnectorOptions}. Make sure the option could be set only once or with same
-     * value.
+     * RocketMQSourceOptions}. Make sure the option could be set only once or with same value.
      *
      * @param key the key of the property.
      * @param value the value of the property.
@@ -151,7 +151,7 @@ public class RocketMQSourceBuilder<OUT> {
 
     /**
      * Set arbitrary properties for the RocketMQ source. The valid keys can be found in {@link
-     * RocketMQSourceConnectorOptions}.
+     * RocketMQSourceOptions}.
      *
      * @param config the config to set for the RocketMQSourceBuilder.
      * @return this RocketMQSourceBuilder.
@@ -185,8 +185,8 @@ public class RocketMQSourceBuilder<OUT> {
         Configuration configuration = configBuilder.build(SOURCE_CONFIG_VALIDATOR);
 
         return new RocketMQSource<>(
-                minOffsetsSelector,
-                maxOffsetsSelector,
+                startingOffsetSelector,
+                stoppingOffsetsSelector,
                 boundedness,
                 deserializationSchema,
                 configuration);

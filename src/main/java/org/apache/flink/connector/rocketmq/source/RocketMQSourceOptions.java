@@ -22,62 +22,77 @@ import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigValidator;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
-import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 
 /** Includes config options of RocketMQ connector type. */
-public class RocketMQSourceConnectorOptions extends RocketMQConnectorOptions {
+public class RocketMQSourceOptions {
 
     public static final RocketMQConfigValidator SOURCE_CONFIG_VALIDATOR =
             RocketMQConfigValidator.builder().build();
 
-    // rocketmq source connector config prefix.
-    public static final String CONSUMER_PREFIX = "rocketmq.source.";
+    public static final ConfigOption<Boolean> COMMIT_OFFSETS_ON_CHECKPOINT =
+            ConfigOptions.key("commit.offsets.on.checkpoint")
+                    .booleanType()
+                    .defaultValue(true)
+                    .withDescription("Whether to commit consuming offset on checkpoint.");
+
+    public static final ConfigOption<Long> PARTITION_DISCOVERY_INTERVAL_MS =
+            ConfigOptions.key("partition.discovery.interval.ms")
+                    .longType()
+                    .defaultValue(10000L)
+                    .withDescription(
+                            "Time interval for polling route information from nameserver or proxy");
+
+    public static final ConfigOption<Long> POLL_TIMEOUT =
+            ConfigOptions.key("poll.timeout")
+                    .longType()
+                    .defaultValue(10L)
+                    .withDescription("how long to wait before giving up, the unit is milliseconds");
 
     public static final ConfigOption<Boolean> OPTIONAL_COLUMN_ERROR_DEBUG =
-            ConfigOptions.key(CONSUMER_PREFIX + "column.error.debug")
+            ConfigOptions.key("column.error.debug")
                     .booleanType()
                     .defaultValue(true)
                     .withDescription("If object deserialize failed, would print error message");
 
     public static final ConfigOption<String> ALLOCATE_MESSAGE_QUEUE_STRATEGY =
-            ConfigOptions.key(CONSUMER_PREFIX + "allocate.strategy")
+            ConfigOptions.key("allocate.strategy")
                     .stringType()
                     .defaultValue(AllocateStrategyFactory.STRATEGY_NAME_CONSISTENT_HASH)
                     .withDescription("The load balancing strategy algorithm");
 
     // pull message limit
     public static final ConfigOption<Integer> PULL_THREADS_NUM =
-            ConfigOptions.key(CONSUMER_PREFIX + "pull.threads.num")
+            ConfigOptions.key("pull.threads.num")
                     .intType()
                     .defaultValue(20)
                     .withDescription("The number of pull threads set");
 
     public static final ConfigOption<Long> PULL_BATCH_SIZE =
-            ConfigOptions.key(CONSUMER_PREFIX + "pull.batch.size")
+            ConfigOptions.key("pull.batch.size")
                     .longType()
                     .defaultValue(32L)
                     .withDescription("The maximum number of messages pulled each time");
 
     public static final ConfigOption<Long> PULL_THRESHOLD_FOR_QUEUE =
-            ConfigOptions.key(CONSUMER_PREFIX + "pull.threshold.queue")
+            ConfigOptions.key("pull.threshold.queue")
                     .longType()
                     .defaultValue(1000L)
                     .withDescription("The queue level flow control threshold");
 
     public static final ConfigOption<Long> PULL_THRESHOLD_FOR_ALL =
-            ConfigOptions.key(CONSUMER_PREFIX + "pull.threshold.all")
+            ConfigOptions.key("pull.threshold.all")
                     .longType()
                     .defaultValue(10 * 1000L)
                     .withDescription("The threshold for flow control of consumed requests");
 
     public static final ConfigOption<Long> PULL_TIMEOUT_MILLIS =
-            ConfigOptions.key(CONSUMER_PREFIX + "pull.rpc.timeout")
+            ConfigOptions.key("pull.rpc.timeout")
                     .longType()
                     .defaultValue(20 * 1000L)
                     .withDescription("The polling timeout setting");
 
     public static final ConfigOption<Long> PULL_TIME_DELAY_MILLS_WHEN_EXCEPTION =
-            ConfigOptions.key(CONSUMER_PREFIX + "pull.rpc.exception.delay")
+            ConfigOptions.key("pull.rpc.exception.delay")
                     .longType()
                     .defaultValue(3 * 1000L)
                     .withDescription(
@@ -85,7 +100,7 @@ public class RocketMQSourceConnectorOptions extends RocketMQConnectorOptions {
                                     + "for in long polling by the broker");
 
     public static final ConfigOption<Long> PULL_TIMEOUT_LONG_POLLING_SUSPEND =
-            ConfigOptions.key(CONSUMER_PREFIX + "pull.suspend.timeout")
+            ConfigOptions.key("pull.suspend.timeout")
                     .longType()
                     .defaultValue(30 * 1000L)
                     .withDescription(
@@ -94,33 +109,27 @@ public class RocketMQSourceConnectorOptions extends RocketMQConnectorOptions {
 
     /** for auto commit offset to rocketmq server */
     public static final ConfigOption<Boolean> AUTO_COMMIT_OFFSET =
-            ConfigOptions.key(CONSUMER_PREFIX + "offset.commit.auto")
+            ConfigOptions.key("offset.commit.auto")
                     .booleanType()
                     .defaultValue(true)
                     .withDescription("The setting for automatic commit of offset");
 
     public static final ConfigOption<Long> AUTO_COMMIT_OFFSET_INTERVAL =
-            ConfigOptions.key(CONSUMER_PREFIX + "offset.commit.interval")
+            ConfigOptions.key("offset.commit.interval")
                     .longType()
                     .defaultValue(5 * 1000L)
                     .withDescription(
                             "Applies to Consumer, the interval for persisting consumption progress");
 
-    public static final ConfigOption<Boolean> COMMIT_OFFSETS_ON_CHECKPOINT =
-            ConfigOptions.key(CONSUMER_PREFIX + "offset.commit.checkpoint")
-                    .booleanType()
-                    .defaultValue(true)
-                    .withDescription("Whether to commit consuming offset on checkpoint.");
-
     /** for message trace, suggest not enable when heavy traffic */
     public static final ConfigOption<Boolean> ENABLE_MESSAGE_TRACE =
-            ConfigOptions.key(CONSUMER_PREFIX + "trace.enable")
+            ConfigOptions.key("trace.enable")
                     .booleanType()
                     .defaultValue(true)
                     .withDescription("The flag for message tracing");
 
     public static final ConfigOption<String> CUSTOMIZED_TRACE_TOPIC =
-            ConfigOptions.key(CONSUMER_PREFIX + "trace.topic")
+            ConfigOptions.key("trace.topic")
                     .stringType()
                     .noDefaultValue()
                     .withDescription("The name of the topic for message tracing");

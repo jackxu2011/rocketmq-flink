@@ -28,7 +28,7 @@ import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigValidator
 import org.apache.flink.connector.rocketmq.legacy.common.selector.MessageQueueSelector;
 import org.apache.flink.connector.rocketmq.sink.writer.serializer.RocketMQSerializationSchema;
 import org.apache.flink.connector.rocketmq.source.RocketMQSource;
-import org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions;
+import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 
 import org.slf4j.Logger;
@@ -100,7 +100,7 @@ public class RocketMQSinkBuilder<IN> {
 
     /**
      * Set an arbitrary property for the RocketMQ source. The valid keys can be found in {@link
-     * RocketMQSourceConnectorOptions}.
+     * RocketMQSourceOptions}.
      *
      * <p>Make sure the option could be set only once or with same value.
      *

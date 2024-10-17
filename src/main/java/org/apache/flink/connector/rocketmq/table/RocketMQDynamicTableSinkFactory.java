@@ -21,7 +21,6 @@ package org.apache.flink.connector.rocketmq.table;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.sink.RocketMQSinkConnectorOptions;
-import org.apache.flink.connector.rocketmq.sink.table.RocketMQDynamicTableSink;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.descriptors.DescriptorProperties;
@@ -63,10 +62,6 @@ public class RocketMQDynamicTableSinkFactory implements DynamicTableSinkFactory 
         Set<ConfigOption<?>> optionalOptions = new HashSet<>();
         optionalOptions.add(RocketMQSinkConnectorOptions.TAG);
         optionalOptions.add(RocketMQSinkConnectorOptions.GROUP);
-        optionalOptions.add(RocketMQSinkConnectorOptions.OPTIONAL_ENCODING);
-        optionalOptions.add(RocketMQSinkConnectorOptions.OPTIONAL_FIELD_DELIMITER);
-        optionalOptions.add(RocketMQSinkConnectorOptions.OPTIONAL_ACCESS_KEY);
-        optionalOptions.add(RocketMQSinkConnectorOptions.OPTIONAL_SECRET_KEY);
         optionalOptions.add(RocketMQSinkConnectorOptions.OPTIONAL_WRITE_DYNAMIC_TAG_COLUMN);
         optionalOptions.add(RocketMQSinkConnectorOptions.OPTIONAL_WRITE_RETRY_TIMES);
         optionalOptions.add(RocketMQSinkConnectorOptions.OPTIONAL_WRITE_SLEEP_TIME_MS);
@@ -91,14 +86,9 @@ public class RocketMQDynamicTableSinkFactory implements DynamicTableSinkFactory 
         String producerGroup = properties.getString(RocketMQSinkConnectorOptions.PRODUCER_GROUP);
         String nameServerAddress = properties.getString(RocketMQSinkConnectorOptions.ENDPOINTS);
         String tag = properties.getString(RocketMQSinkConnectorOptions.TAG);
-        String accessKey = properties.getString(RocketMQSinkConnectorOptions.OPTIONAL_ACCESS_KEY);
-        String secretKey = properties.getString(RocketMQSinkConnectorOptions.OPTIONAL_SECRET_KEY);
         String dynamicColumn =
                 properties.getString(
                         RocketMQSinkConnectorOptions.OPTIONAL_WRITE_DYNAMIC_TAG_COLUMN);
-        String encoding = properties.getString(RocketMQSinkConnectorOptions.OPTIONAL_ENCODING);
-        String fieldDelimiter =
-                properties.getString(RocketMQSinkConnectorOptions.OPTIONAL_FIELD_DELIMITER);
         int retryTimes =
                 properties.getInteger(RocketMQSinkConnectorOptions.OPTIONAL_WRITE_RETRY_TIMES);
         long sleepTimeMs =
@@ -128,12 +118,8 @@ public class RocketMQDynamicTableSinkFactory implements DynamicTableSinkFactory 
                 topicName,
                 producerGroup,
                 nameServerAddress,
-                accessKey,
-                secretKey,
                 tag,
                 dynamicColumn,
-                fieldDelimiter,
-                encoding,
                 retryTimes,
                 sleepTimeMs,
                 isDynamicTag,

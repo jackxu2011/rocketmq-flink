@@ -1,7 +1,6 @@
 package org.apache.flink.connector.rocketmq.table;
 
 import org.apache.flink.configuration.ReadableConfig;
-import org.apache.flink.connector.rocketmq.source.RocketMQSourceConnectorOptions;
 import org.apache.flink.connector.rocketmq.table.config.BoundedMode;
 import org.apache.flink.connector.rocketmq.table.config.BoundedOptions;
 import org.apache.flink.connector.rocketmq.table.config.StartupMode;
@@ -13,9 +12,6 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.util.Preconditions;
-import org.apache.flink.util.StringUtils;
-
-import org.apache.rocketmq.acl.common.SessionCredentials;
 
 import java.util.Collections;
 import java.util.List;
@@ -104,22 +100,6 @@ public class RocketMQConnectorOptionsUtil {
 
     public static String getFilterTag(ReadableConfig tableOptions) {
         return tableOptions.getOptional(SCAN_FILTER_TAG).orElse(null);
-    }
-
-    public static SessionCredentials getCredentials(ReadableConfig tableOptions) {
-        String accessKey =
-                tableOptions
-                        .getOptional(RocketMQSourceConnectorOptions.OPTIONAL_ACCESS_KEY)
-                        .orElse(null);
-        String secretKey =
-                tableOptions
-                        .getOptional(RocketMQSourceConnectorOptions.OPTIONAL_SECRET_KEY)
-                        .orElse(null);
-        if (StringUtils.isNullOrWhitespaceOnly(accessKey)
-                || StringUtils.isNullOrWhitespaceOnly(secretKey)) {
-            return null;
-        }
-        return new SessionCredentials(accessKey, secretKey);
     }
 
     private static boolean isSingleTopic(ReadableConfig tableOptions) {
