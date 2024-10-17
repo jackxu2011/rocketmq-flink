@@ -22,8 +22,8 @@ import org.apache.flink.api.common.eventtime.Watermark;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.SourceOutput;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQSchemaWrapper;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplitState;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplitState;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 
@@ -58,9 +58,9 @@ public class RocketMQRecordEmitterTest {
         long stoppingTimestamp = System.currentTimeMillis();
 
         MessageView messageView = new MessageViewExt(message);
-        RocketMQSourceSplitState partitionSplitState =
-                new RocketMQSourceSplitState(
-                        new RocketMQSourceSplit(topic, broker, partition, startingOffset, -1L));
+        RocketMQPartitionSplitState partitionSplitState =
+                new RocketMQPartitionSplitState(
+                        new RocketMQPartitionSplit(topic, broker, partition, startingOffset, -1L));
 
         recordEmitter.emitRecord(messageView, new TestingEmitterOutput<>(), partitionSplitState);
     }

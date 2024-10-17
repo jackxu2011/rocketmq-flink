@@ -21,14 +21,14 @@ package org.apache.flink.connector.rocketmq.source.reader;
 import org.apache.flink.api.connector.source.SourceOutput;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplitState;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplitState;
 import org.apache.flink.util.Collector;
 
 import java.io.IOException;
 
 /** The {@link RecordEmitter} implementation for {@link RocketMQSourceReader}. */
 public class RocketMQRecordEmitter<T>
-        implements RecordEmitter<MessageView, T, RocketMQSourceSplitState> {
+        implements RecordEmitter<MessageView, T, RocketMQPartitionSplitState> {
 
     private final RocketMQDeserializationSchema<T> deserializationSchema;
     private final SourceOutputWrapper<T> sourceOutputWrapper = new SourceOutputWrapper<>();
@@ -39,7 +39,7 @@ public class RocketMQRecordEmitter<T>
 
     @Override
     public void emitRecord(
-            MessageView element, SourceOutput<T> output, RocketMQSourceSplitState splitState)
+            MessageView element, SourceOutput<T> output, RocketMQPartitionSplitState splitState)
             throws IOException {
 
         try {

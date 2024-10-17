@@ -16,7 +16,7 @@
  */
 package org.apache.flink.connector.rocketmq.source.enumerator.allocate;
 
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,17 +32,17 @@ public class ConsistentHashAllocateStrategy implements AllocateStrategy {
     }
 
     /** Returns the index of the target subtask that a specific queue should be assigned to. */
-    private int getSplitOwner(RocketMQSourceSplit sourceSplit, int parallelism) {
+    private int getSplitOwner(RocketMQPartitionSplit sourceSplit, int parallelism) {
         int startIndex =
                 ((sourceSplit.getMessageQueue().hashCode() * 31) & Integer.MAX_VALUE) % parallelism;
         return startIndex % parallelism;
     }
 
     @Override
-    public Map<Integer, Set<RocketMQSourceSplit>> allocate(
-            final Collection<RocketMQSourceSplit> mqAll, final int parallelism) {
-        Map<Integer, Set<RocketMQSourceSplit>> result = new HashMap<>();
-        for (RocketMQSourceSplit mq : mqAll) {
+    public Map<Integer, Set<RocketMQPartitionSplit>> allocate(
+            final Collection<RocketMQPartitionSplit> mqAll, final int parallelism) {
+        Map<Integer, Set<RocketMQPartitionSplit>> result = new HashMap<>();
+        for (RocketMQPartitionSplit mq : mqAll) {
             int readerIndex = this.getSplitOwner(mq, parallelism);
             result.computeIfAbsent(readerIndex, k -> new HashSet<>()).add(mq);
         }

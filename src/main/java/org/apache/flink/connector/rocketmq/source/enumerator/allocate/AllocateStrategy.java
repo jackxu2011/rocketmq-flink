@@ -18,7 +18,7 @@
 package org.apache.flink.connector.rocketmq.source.enumerator.allocate;
 
 import org.apache.flink.annotation.PublicEvolving;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
 import java.util.Collection;
 import java.util.Map;
@@ -42,6 +42,6 @@ public interface AllocateStrategy {
      * @param parallelism the desired parallelism for the Flink tasks
      * @return a map of task indices to sets of corresponding RocketMQ source splits
      */
-    Map<Integer, Set<RocketMQSourceSplit>> allocate(
-            final Collection<RocketMQSourceSplit> mqAll, final int parallelism);
+    Map<Integer, Set<RocketMQPartitionSplit>> allocate(
+            final Collection<RocketMQPartitionSplit> mqAll, final int parallelism);
 }

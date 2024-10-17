@@ -32,7 +32,7 @@ import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategy;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.util.FlinkRuntimeException;
 
@@ -57,12 +57,12 @@ import java.util.stream.Stream;
 /** The enumerator class for RocketMQ source. */
 @Internal
 public class RocketMQSourceEnumerator
-        implements SplitEnumerator<RocketMQSourceSplit, RocketMQSourceEnumState> {
+        implements SplitEnumerator<RocketMQPartitionSplit, RocketMQSourceEnumState> {
 
     private static final Logger log = LoggerFactory.getLogger(RocketMQSourceEnumerator.class);
 
     private final Configuration configuration;
-    private final SplitEnumeratorContext<RocketMQSourceSplit> context;
+    private final SplitEnumeratorContext<RocketMQPartitionSplit> context;
     private final Boundedness boundedness;
     // Users can specify the starting / stopping offset initializer.
     private final AllocateStrategy allocateStrategy;
@@ -74,7 +74,7 @@ public class RocketMQSourceEnumerator
     // The discovered and initialized partition splits that are waiting for owner reader to be
     // ready.
     private final Set<MessageQueue> allocatedSet;
-    private final Map<Integer, Set<RocketMQSourceSplit>> pendingSplitAssignmentMap;
+    private final Map<Integer, Set<RocketMQPartitionSplit>> pendingSplitAssignmentMap;
     // Param from configuration
     private final String groupId;
     private final long partitionDiscoveryIntervalMs;
@@ -85,7 +85,7 @@ public class RocketMQSourceEnumerator
             OffsetsSelector stoppingOffsetsSelector,
             Boundedness boundedness,
             Configuration configuration,
-            SplitEnumeratorContext<RocketMQSourceSplit> context) {
+            SplitEnumeratorContext<RocketMQPartitionSplit> context) {
 
         this(
                 startingOffsetsSelector,
@@ -101,7 +101,7 @@ public class RocketMQSourceEnumerator
             OffsetsSelector stoppingOffsetsSelector,
             Boundedness boundedness,
             Configuration configuration,
-            SplitEnumeratorContext<RocketMQSourceSplit> context,
+            SplitEnumeratorContext<RocketMQPartitionSplit> context,
             Set<MessageQueue> currentSplitAssignment) {
         this.configuration = configuration;
         this.context = context;
@@ -162,7 +162,7 @@ public class RocketMQSourceEnumerator
      * @param subtaskId The id of the subtask to which the returned splits belong.
      */
     @Override
-    public void addSplitsBack(List<RocketMQSourceSplit> splits, int subtaskId) {
+    public void addSplitsBack(List<RocketMQPartitionSplit> splits, int subtaskId) {
         SourceSplitChangeResult sourceSplitChangeResult =
                 new SourceSplitChangeResult(new HashSet<>(splits));
         this.calculateSplitAssignment(sourceSplitChangeResult);
@@ -257,15 +257,15 @@ public class RocketMQSourceEnumerator
         Map<MessageQueue, Long> stoppingOffsets =
                 stoppingOffsetsSelector.getMessageQueueOffsets(increaseSet, offsetsRetriever);
 
-        Set<RocketMQSourceSplit> increaseSplitSet =
+        Set<RocketMQPartitionSplit> increaseSplitSet =
                 increaseSet.stream()
                         .map(
                                 mq -> {
                                     long startingOffset = startingOffsets.get(mq);
                                     long stoppingOffset =
                                             stoppingOffsets.getOrDefault(
-                                                    mq, RocketMQSourceSplit.NO_STOPPING_OFFSET);
-                                    return new RocketMQSourceSplit(
+                                                    mq, RocketMQPartitionSplit.NO_STOPPING_OFFSET);
+                                    return new RocketMQPartitionSplit(
                                             mq, startingOffset, stoppingOffset);
                                 })
                         .collect(Collectors.toSet());
@@ -296,11 +296,11 @@ public class RocketMQSourceEnumerator
 
     /** Calculate new split assignment according allocate strategy */
     private void calculateSplitAssignment(SourceSplitChangeResult sourceSplitChangeResult) {
-        Map<Integer, Set<RocketMQSourceSplit>> newSourceSplitAllocateMap =
+        Map<Integer, Set<RocketMQPartitionSplit>> newSourceSplitAllocateMap =
                 this.allocateStrategy.allocate(
                         sourceSplitChangeResult.getIncreaseSet(), context.currentParallelism());
 
-        for (Map.Entry<Integer, Set<RocketMQSourceSplit>> entry :
+        for (Map.Entry<Integer, Set<RocketMQPartitionSplit>> entry :
                 newSourceSplitAllocateMap.entrySet()) {
             this.pendingSplitAssignmentMap
                     .computeIfAbsent(entry.getKey(), r -> new HashSet<>())
@@ -310,7 +310,7 @@ public class RocketMQSourceEnumerator
 
     // This method should only be invoked in the coordinator executor thread.
     private void sendSplitChangesToRemote(Set<Integer> pendingReaders) {
-        Map<Integer, List<RocketMQSourceSplit>> incrementalSplit = new ConcurrentHashMap<>();
+        Map<Integer, List<RocketMQPartitionSplit>> incrementalSplit = new ConcurrentHashMap<>();
 
         for (Integer pendingReader : pendingReaders) {
             if (!context.registeredReaders().containsKey(pendingReader)) {
@@ -320,7 +320,7 @@ public class RocketMQSourceEnumerator
                                 pendingReader));
             }
 
-            final Set<RocketMQSourceSplit> pendingAssignmentForReader =
+            final Set<RocketMQPartitionSplit> pendingAssignmentForReader =
                     this.pendingSplitAssignmentMap.remove(pendingReader);
 
             // Put pending assignment into incremental assignment
@@ -404,21 +404,21 @@ public class RocketMQSourceEnumerator
     @VisibleForTesting
     public static class SourceSplitChangeResult {
 
-        private final Set<RocketMQSourceSplit> increaseSet;
+        private final Set<RocketMQPartitionSplit> increaseSet;
         private final Set<MessageQueue> decreaseSet;
 
-        private SourceSplitChangeResult(Set<RocketMQSourceSplit> increaseSet) {
+        private SourceSplitChangeResult(Set<RocketMQPartitionSplit> increaseSet) {
             this.increaseSet = Collections.unmodifiableSet(increaseSet);
             this.decreaseSet = Sets.newHashSet();
         }
 
         private SourceSplitChangeResult(
-                Set<RocketMQSourceSplit> increaseSet, Set<MessageQueue> decreaseSet) {
+                Set<RocketMQPartitionSplit> increaseSet, Set<MessageQueue> decreaseSet) {
             this.increaseSet = Collections.unmodifiableSet(increaseSet);
             this.decreaseSet = Collections.unmodifiableSet(decreaseSet);
         }
 
-        public Set<RocketMQSourceSplit> getIncreaseSet() {
+        public Set<RocketMQPartitionSplit> getIncreaseSet() {
             return increaseSet;
         }
 

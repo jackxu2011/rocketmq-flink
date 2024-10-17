@@ -17,7 +17,7 @@
 
 package org.apache.flink.connector.rocketmq.source.util;
 
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 
@@ -35,7 +35,7 @@ public class UtilAll {
                 mq.getTopic(), mq.getBrokerName(), mq.getQueueId());
     }
 
-    public static MessageQueue getMessageQueue(RocketMQSourceSplit split) {
+    public static MessageQueue getMessageQueue(RocketMQPartitionSplit split) {
         return new MessageQueue(split.getTopic(), split.getBrokerName(), split.getQueueId());
     }
 }

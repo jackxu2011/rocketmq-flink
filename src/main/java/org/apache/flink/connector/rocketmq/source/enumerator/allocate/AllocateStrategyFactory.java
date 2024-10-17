@@ -21,7 +21,7 @@ import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.RocketMQSourceEnumState;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
 public class AllocateStrategyFactory {
 
@@ -34,7 +34,7 @@ public class AllocateStrategyFactory {
 
     public static AllocateStrategy getStrategy(
             Configuration rocketmqSourceOptions,
-            SplitEnumeratorContext<RocketMQSourceSplit> context,
+            SplitEnumeratorContext<RocketMQPartitionSplit> context,
             RocketMQSourceEnumState enumState) {
 
         String allocateStrategyName =

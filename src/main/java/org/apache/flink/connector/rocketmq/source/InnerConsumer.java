@@ -17,13 +17,12 @@
 
 package org.apache.flink.connector.rocketmq.source;
 
-import org.apache.flink.connector.rocketmq.source.reader.MessageView;
+import org.apache.flink.connector.rocketmq.source.reader.ConsumerRecords;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -65,7 +64,7 @@ public interface InnerConsumer extends AutoCloseable {
      *
      * @return list of message, can be null.
      */
-    List<MessageView> poll(Duration timeout);
+    ConsumerRecords poll(Duration timeout);
 
     /** interrupt poll message */
     void wakeup();
@@ -93,6 +92,14 @@ public interface InnerConsumer extends AutoCloseable {
      * @param offset message offset.
      */
     void seek(MessageQueue messageQueue, long offset);
+
+    /**
+     * Seek consumer group previously committed offset
+     *
+     * @param messageQueue rocketmq queue to locate single queue
+     * @return offset for message queue
+     */
+    Long position(MessageQueue messageQueue);
 
     /**
      * Seek consumer group previously committed offset

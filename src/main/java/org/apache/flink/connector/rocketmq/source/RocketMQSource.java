@@ -42,8 +42,8 @@ import org.apache.flink.connector.rocketmq.source.reader.RocketMQSourceFetcherMa
 import org.apache.flink.connector.rocketmq.source.reader.RocketMQSourceReader;
 import org.apache.flink.connector.rocketmq.source.reader.RocketMQSplitReader;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplitSerializer;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.util.UserCodeClassLoader;
@@ -55,7 +55,7 @@ import java.util.function.Supplier;
 
 /** The Source implementation of RocketMQ. */
 public class RocketMQSource<OUT>
-        implements Source<OUT, RocketMQSourceSplit, RocketMQSourceEnumState>,
+        implements Source<OUT, RocketMQPartitionSplit, RocketMQSourceEnumState>,
                 ResultTypeQueryable<OUT> {
 
     private static final long serialVersionUID = -1L;
@@ -102,7 +102,7 @@ public class RocketMQSource<OUT>
     }
 
     @Override
-    public SourceReader<OUT, RocketMQSourceSplit> createReader(SourceReaderContext readerContext)
+    public SourceReader<OUT, RocketMQPartitionSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
 
         FutureCompletingBlockingQueue<RecordsWithSplitIds<MessageView>> elementsQueue =
@@ -124,13 +124,8 @@ public class RocketMQSource<OUT>
         final RocketMQSourceReaderMetrics rocketMQSourceReaderMetrics =
                 new RocketMQSourceReaderMetrics(readerContext.metricGroup());
 
-        Supplier<SplitReader<MessageView, RocketMQSourceSplit>> splitReaderSupplier =
-                () ->
-                        new RocketMQSplitReader<>(
-                                configuration,
-                                readerContext,
-                                deserializationSchema,
-                                rocketMQSourceReaderMetrics);
+        Supplier<SplitReader<MessageView, RocketMQPartitionSplit>> splitReaderSupplier =
+                () -> new RocketMQSplitReader<>(configuration, rocketMQSourceReaderMetrics);
 
         RocketMQSourceFetcherManager rocketmqSourceFetcherManager =
                 new RocketMQSourceFetcherManager(
@@ -149,8 +144,8 @@ public class RocketMQSource<OUT>
     }
 
     @Override
-    public SplitEnumerator<RocketMQSourceSplit, RocketMQSourceEnumState> createEnumerator(
-            SplitEnumeratorContext<RocketMQSourceSplit> enumContext) {
+    public SplitEnumerator<RocketMQPartitionSplit, RocketMQSourceEnumState> createEnumerator(
+            SplitEnumeratorContext<RocketMQPartitionSplit> enumContext) {
 
         return new RocketMQSourceEnumerator(
                 startingOffsetsSelector,
@@ -161,8 +156,8 @@ public class RocketMQSource<OUT>
     }
 
     @Override
-    public SplitEnumerator<RocketMQSourceSplit, RocketMQSourceEnumState> restoreEnumerator(
-            SplitEnumeratorContext<RocketMQSourceSplit> enumContext,
+    public SplitEnumerator<RocketMQPartitionSplit, RocketMQSourceEnumState> restoreEnumerator(
+            SplitEnumeratorContext<RocketMQPartitionSplit> enumContext,
             RocketMQSourceEnumState checkpoint) {
 
         return new RocketMQSourceEnumerator(
@@ -175,7 +170,7 @@ public class RocketMQSource<OUT>
     }
 
     @Override
-    public SimpleVersionedSerializer<RocketMQSourceSplit> getSplitSerializer() {
+    public SimpleVersionedSerializer<RocketMQPartitionSplit> getSplitSerializer() {
         return new RocketMQPartitionSplitSerializer();
     }
 

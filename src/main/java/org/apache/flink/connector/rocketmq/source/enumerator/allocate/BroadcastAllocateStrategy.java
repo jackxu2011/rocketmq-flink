@@ -16,7 +16,7 @@
  */
 package org.apache.flink.connector.rocketmq.source.enumerator.allocate;
 
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,9 +32,9 @@ public class BroadcastAllocateStrategy implements AllocateStrategy {
     }
 
     @Override
-    public Map<Integer, Set<RocketMQSourceSplit>> allocate(
-            final Collection<RocketMQSourceSplit> mqAll, final int parallelism) {
-        Map<Integer, Set<RocketMQSourceSplit>> result = new HashMap<>(parallelism);
+    public Map<Integer, Set<RocketMQPartitionSplit>> allocate(
+            final Collection<RocketMQPartitionSplit> mqAll, final int parallelism) {
+        Map<Integer, Set<RocketMQPartitionSplit>> result = new HashMap<>(parallelism);
         for (int i = 0; i < parallelism; i++) {
             result.computeIfAbsent(i, k -> new HashSet<>()).addAll(mqAll);
         }

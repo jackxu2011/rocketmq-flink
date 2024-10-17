@@ -1,6 +1,6 @@
 package org.apache.flink.connector.rocketmq.source.enumerator.allocate;
 
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -21,18 +21,18 @@ public class ConsistentHashAllocateStrategyTest {
     @Test
     public void consistentHashAllocateStrategyTest() {
         AllocateStrategy allocateStrategy = new ConsistentHashAllocateStrategy();
-        Collection<RocketMQSourceSplit> mqAll = new ArrayList<>();
+        Collection<RocketMQPartitionSplit> mqAll = new ArrayList<>();
         for (int i = 0; i < NUM_SPLITS; i++) {
             mqAll.add(
-                    new RocketMQSourceSplit(
+                    new RocketMQPartitionSplit(
                             PREFIX_TOPIC + (i + 1), BROKER_NAME, i, 0, SPLIT_SIZE[i]));
         }
         int parallelism = 2;
-        Map<Integer, Set<RocketMQSourceSplit>> result =
+        Map<Integer, Set<RocketMQPartitionSplit>> result =
                 allocateStrategy.allocate(mqAll, parallelism);
         for (int i = 0; i < parallelism; i++) {
-            Set<RocketMQSourceSplit> splits = result.getOrDefault(i, new HashSet<>());
-            for (RocketMQSourceSplit split : splits) {
+            Set<RocketMQPartitionSplit> splits = result.getOrDefault(i, new HashSet<>());
+            for (RocketMQPartitionSplit split : splits) {
                 mqAll.remove(split);
             }
         }

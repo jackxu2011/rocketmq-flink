@@ -26,7 +26,7 @@ import org.apache.flink.connector.base.source.reader.fetcher.SplitFetcher;
 import org.apache.flink.connector.base.source.reader.fetcher.SplitFetcherTask;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 
 @Internal
 public class RocketMQSourceFetcherManager
-        extends SingleThreadFetcherManager<MessageView, RocketMQSourceSplit> {
+        extends SingleThreadFetcherManager<MessageView, RocketMQPartitionSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RocketMQSourceFetcherManager.class);
 
@@ -55,7 +55,7 @@ public class RocketMQSourceFetcherManager
      */
     public RocketMQSourceFetcherManager(
             FutureCompletingBlockingQueue<RecordsWithSplitIds<MessageView>> elementsQueue,
-            Supplier<SplitReader<MessageView, RocketMQSourceSplit>> splitReaderSupplier,
+            Supplier<SplitReader<MessageView, RocketMQPartitionSplit>> splitReaderSupplier,
             Consumer<Collection<String>> splitFinishedHook) {
 
         super(elementsQueue, splitReaderSupplier, new Configuration(), splitFinishedHook);
@@ -67,7 +67,7 @@ public class RocketMQSourceFetcherManager
         }
 
         LOG.info("Consumer commit offsets {}", offsetsToCommit);
-        SplitFetcher<MessageView, RocketMQSourceSplit> splitFetcher = fetchers.get(0);
+        SplitFetcher<MessageView, RocketMQPartitionSplit> splitFetcher = fetchers.get(0);
         if (splitFetcher != null) {
             // The fetcher thread is still running. This should be the majority of the cases.
             enqueueOffsetsCommitTask(splitFetcher, offsetsToCommit);
@@ -79,7 +79,7 @@ public class RocketMQSourceFetcherManager
     }
 
     private void enqueueOffsetsCommitTask(
-            SplitFetcher<MessageView, RocketMQSourceSplit> splitFetcher,
+            SplitFetcher<MessageView, RocketMQPartitionSplit> splitFetcher,
             Map<MessageQueue, Long> offsetsToCommit) {
 
         RocketMQSplitReader<?> splitReader = (RocketMQSplitReader<?>) splitFetcher.getSplitReader();

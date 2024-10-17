@@ -17,6 +17,8 @@
 
 package org.apache.flink.connector.rocketmq.source.reader;
 
+import org.apache.rocketmq.common.message.MessageQueue;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -107,4 +109,8 @@ public interface MessageView {
      * @return the message properties
      */
     Map<String, String> getProperties();
+
+    default MessageQueue getMessageQueue() {
+        return new MessageQueue(getTopic(), getBrokerName(), getQueueId());
+    }
 }

@@ -27,7 +27,7 @@ import java.util.Objects;
 import static org.apache.flink.connector.rocketmq.source.util.UtilAll.SEPARATOR;
 
 /** A {@link SourceSplit} for a RocketMQ partition. */
-public class RocketMQSourceSplit implements SourceSplit {
+public class RocketMQPartitionSplit implements SourceSplit {
 
     // -1 means Long.MAX_VALUE
     public static final long NO_STOPPING_OFFSET = -1L;
@@ -38,7 +38,7 @@ public class RocketMQSourceSplit implements SourceSplit {
     private final long startingOffset;
     private final long stoppingOffset;
 
-    public RocketMQSourceSplit(
+    public RocketMQPartitionSplit(
             MessageQueue messageQueue, long startingOffset, long stoppingOffset) {
         this(
                 messageQueue.getTopic(),
@@ -48,7 +48,7 @@ public class RocketMQSourceSplit implements SourceSplit {
                 stoppingOffset);
     }
 
-    public RocketMQSourceSplit(
+    public RocketMQPartitionSplit(
             String topic,
             String brokerName,
             int queueId,
@@ -104,10 +104,10 @@ public class RocketMQSourceSplit implements SourceSplit {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof RocketMQSourceSplit)) {
+        if (!(obj instanceof RocketMQPartitionSplit)) {
             return false;
         }
-        RocketMQSourceSplit other = (RocketMQSourceSplit) obj;
+        RocketMQPartitionSplit other = (RocketMQPartitionSplit) obj;
         return topic.equals(other.topic)
                 && brokerName.equals(other.brokerName)
                 && queueId == other.queueId

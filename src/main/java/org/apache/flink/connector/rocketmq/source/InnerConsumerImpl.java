@@ -21,6 +21,7 @@ import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
+import org.apache.flink.connector.rocketmq.source.reader.ConsumerRecords;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.MessageViewExt;
 import org.apache.flink.connector.rocketmq.source.util.UtilAll;
@@ -188,10 +189,14 @@ public class InnerConsumerImpl implements InnerConsumer {
     }
 
     @Override
-    public List<MessageView> poll(Duration timeout) {
-        return this.consumer.poll(timeout.toMillis()).stream()
-                .map((Function<MessageExt, MessageView>) MessageViewExt::new)
-                .collect(Collectors.toList());
+    public ConsumerRecords poll(Duration timeout) {
+        Map<MessageQueue, List<MessageView>> records =
+                this.consumer.poll(timeout.toMillis()).stream()
+                        .map((Function<MessageExt, MessageView>) MessageViewExt::new)
+                        .collect(
+                                Collectors.groupingBy(
+                                        MessageView::getMessageQueue, Collectors.toList()));
+        return new ConsumerRecords(records);
     }
 
     @Override
@@ -231,6 +236,11 @@ public class InnerConsumerImpl implements InnerConsumer {
     public void resume(Collection<MessageQueue> messageQueues) {
         this.consumer.resume(messageQueues);
         LOG.info("Consumer resume fetch messages, mq(s)={}", messageQueues);
+    }
+
+    public Long position(MessageQueue messageQueue) {
+        CompletableFuture<Long> future = seekCommittedOffset(messageQueue);
+        return future.join();
     }
 
     @Override

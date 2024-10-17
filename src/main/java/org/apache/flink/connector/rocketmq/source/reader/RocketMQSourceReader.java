@@ -27,8 +27,8 @@ import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSource
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.metrics.RocketMQSourceReaderMetrics;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplit;
-import org.apache.flink.connector.rocketmq.source.split.RocketMQSourceSplitState;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
+import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplitState;
 import org.apache.flink.connector.rocketmq.source.util.UtilAll;
 
 import org.apache.rocketmq.common.message.MessageQueue;
@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 /** The source reader for RocketMQ partitions. */
 public class RocketMQSourceReader<T>
         extends SingleThreadMultiplexSourceReaderBase<
-                MessageView, T, RocketMQSourceSplit, RocketMQSourceSplitState> {
+                MessageView, T, RocketMQPartitionSplit, RocketMQPartitionSplitState> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RocketMQSourceReader.class);
 
@@ -61,7 +61,7 @@ public class RocketMQSourceReader<T>
     public RocketMQSourceReader(
             FutureCompletingBlockingQueue<RecordsWithSplitIds<MessageView>> elementsQueue,
             RocketMQSourceFetcherManager rocketmqSourceFetcherManager,
-            RecordEmitter<MessageView, T, RocketMQSourceSplitState> recordEmitter,
+            RecordEmitter<MessageView, T, RocketMQPartitionSplitState> recordEmitter,
             Configuration config,
             SourceReaderContext context,
             RocketMQSourceReaderMetrics rocketMQSourceReaderMetrics) {
@@ -75,7 +75,7 @@ public class RocketMQSourceReader<T>
     }
 
     @Override
-    protected void onSplitFinished(Map<String, RocketMQSourceSplitState> finishedSplitIds) {
+    protected void onSplitFinished(Map<String, RocketMQPartitionSplitState> finishedSplitIds) {
         finishedSplitIds.forEach(
                 (ignored, splitState) -> {
                     if (splitState.getCurrentOffset() >= 0) {
@@ -86,8 +86,8 @@ public class RocketMQSourceReader<T>
     }
 
     @Override
-    public List<RocketMQSourceSplit> snapshotState(long checkpointId) {
-        List<RocketMQSourceSplit> splits = super.snapshotState(checkpointId);
+    public List<RocketMQPartitionSplit> snapshotState(long checkpointId) {
+        List<RocketMQPartitionSplit> splits = super.snapshotState(checkpointId);
         if (!commitOffsetsOnCheckpoint) {
             return splits;
         }
@@ -98,7 +98,7 @@ public class RocketMQSourceReader<T>
             Map<MessageQueue, Long> offsetsMap =
                     offsetsToCommit.computeIfAbsent(checkpointId, id -> new HashMap<>());
             // Put the offsets of the active splits.
-            for (RocketMQSourceSplit split : splits) {
+            for (RocketMQPartitionSplit split : splits) {
                 // If the checkpoint is triggered before the queue min offsets
                 // is retrieved, do not commit the offsets for those partitions.
                 if (split.getStartingOffset() >= 0) {
@@ -130,12 +130,13 @@ public class RocketMQSourceReader<T>
     }
 
     @Override
-    protected RocketMQSourceSplitState initializedState(RocketMQSourceSplit partitionSplit) {
-        return new RocketMQSourceSplitState(partitionSplit);
+    protected RocketMQPartitionSplitState initializedState(RocketMQPartitionSplit partitionSplit) {
+        return new RocketMQPartitionSplitState(partitionSplit);
     }
 
     @Override
-    protected RocketMQSourceSplit toSplitType(String splitId, RocketMQSourceSplitState splitState) {
+    protected RocketMQPartitionSplit toSplitType(
+            String splitId, RocketMQPartitionSplitState splitState) {
         return splitState.getSourceSplit();
     }
 

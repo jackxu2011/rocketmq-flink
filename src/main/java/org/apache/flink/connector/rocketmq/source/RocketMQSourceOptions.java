@@ -45,7 +45,7 @@ public class RocketMQSourceOptions {
     public static final ConfigOption<Long> POLL_TIMEOUT =
             ConfigOptions.key("poll.timeout")
                     .longType()
-                    .defaultValue(10L)
+                    .defaultValue(10000L)
                     .withDescription("how long to wait before giving up, the unit is milliseconds");
 
     public static final ConfigOption<Boolean> OPTIONAL_COLUMN_ERROR_DEBUG =
