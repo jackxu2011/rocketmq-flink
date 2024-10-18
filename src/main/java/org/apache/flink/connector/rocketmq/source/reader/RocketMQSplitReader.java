@@ -26,7 +26,7 @@ import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsAddition;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.rocketmq.source.InnerConsumer;
-import org.apache.flink.connector.rocketmq.source.InnerConsumerImpl;
+import org.apache.flink.connector.rocketmq.source.RocketMQConsumer;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.metrics.RocketMQSourceReaderMetrics;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
@@ -80,7 +80,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
         this.configuration = configuration;
         POLL_TIMEOUT =
                 Duration.ofMillis(this.configuration.get(RocketMQSourceOptions.POLL_TIMEOUT));
-        this.consumer = new InnerConsumerImpl(configuration);
+        this.consumer = new RocketMQConsumer(configuration);
         this.consumer.start();
         this.rocketmqSourceReaderMetrics = rocketmqSourceReaderMetrics;
     }
@@ -107,7 +107,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
         List<MessageQueue> finishedPartitions = new ArrayList<>();
         for (MessageQueue partition : consumer.assignment()) {
             long stoppingOffset = getStoppingOffset(partition);
-            long consumerPosition = consumer.position(partition);
+            long consumerPosition = consumer.committed(partition);
             // Stop fetching when the consumer's position reaches the stoppingOffset.
             // Control messages may follow the last record; therefore, using the last record's
             // offset as a stopping condition could result in indefinite blocking.
@@ -232,7 +232,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
         List<MessageQueue> emptyPartitions = new ArrayList<>();
         // If none of the partitions have any records,
         for (MessageQueue partition : consumer.assignment()) {
-            if (consumer.position(partition) >= getStoppingOffset(partition)) {
+            if (consumer.committed(partition) >= getStoppingOffset(partition)) {
                 emptyPartitions.add(partition);
             }
         }
@@ -250,9 +250,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
 
     public void notifyCheckpointComplete(Map<MessageQueue, Long> offsetsToCommit) {
         if (offsetsToCommit != null) {
-            for (Map.Entry<MessageQueue, Long> entry : offsetsToCommit.entrySet()) {
-                consumer.commitOffset(entry.getKey(), entry.getValue());
-            }
+            consumer.commitAsync(offsetsToCommit);
         }
     }
 

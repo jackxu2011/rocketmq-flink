@@ -43,8 +43,8 @@ public interface OffsetsSelector extends Serializable {
      *
      * @return an offset initializer which initialize the offsets to the committed offsets.
      */
-    static OffsetsSelector committedOffsets() {
-        return committedOffsets(OffsetResetStrategy.LATEST);
+    static OffsetsSelector committed() {
+        return committed(OffsetResetStrategy.LATEST);
     }
 
     /**
@@ -56,9 +56,11 @@ public interface OffsetsSelector extends Serializable {
      *     exist.
      * @return an {@link OffsetsSelector} which initializes the offsets to the committed offsets.
      */
-    static OffsetsSelector committedOffsets(OffsetResetStrategy offsetResetStrategy) {
+    static OffsetsSelector committed(OffsetResetStrategy offsetResetStrategy) {
+        // Because ConsumeFromWhere does have CONSUME_FROM_COMMITTED option, use
+        // CONSUME_FROM_TIMESTAMP as sentinel
         return new OffsetsSelectorByStrategy(
-                ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET, offsetResetStrategy);
+                ConsumeFromWhere.CONSUME_FROM_TIMESTAMP, offsetResetStrategy);
     }
 
     /**
@@ -89,15 +91,14 @@ public interface OffsetsSelector extends Serializable {
     }
 
     /**
-     * Get an {@link OffsetsSelector} which initializes the offsets to the latest offsets of each
-     * partition.
+     * Get an {@link OffsetsSelector} which initializes the offsets to the latest available offsets
+     * of each partition.
      *
-     * @return an {@link OffsetsSelector} which initializes the offsets to the latest offsets.
+     * @return an offset initializer which initialize the offsets to the latest available offsets.
      */
-    @SuppressWarnings("deprecation")
     static OffsetsSelector latest() {
         return new OffsetsSelectorByStrategy(
-                ConsumeFromWhere.CONSUME_FROM_MAX_OFFSET, OffsetResetStrategy.LATEST);
+                ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET, OffsetResetStrategy.LATEST);
     }
 
     /**
@@ -154,15 +155,15 @@ public interface OffsetsSelector extends Serializable {
          * The group id should be the set for {@link RocketMQSource } before invoking this method.
          * Otherwise, an {@code IllegalStateException} will be thrown.
          */
-        Map<MessageQueue, Long> committedOffsets(Collection<MessageQueue> messageQueues);
+        Map<MessageQueue, Long> committed(Collection<MessageQueue> messageQueues);
 
-        /** List min offsets for the specified MessageQueues. */
-        Map<MessageQueue, Long> minOffsets(Collection<MessageQueue> messageQueues);
+        /** List begin offsets for the specified MessageQueues. */
+        Map<MessageQueue, Long> beginOffsets(Collection<MessageQueue> messageQueues);
 
-        /** List max offsets for the specified MessageQueues. */
-        Map<MessageQueue, Long> maxOffsets(Collection<MessageQueue> messageQueues);
+        /** List end offsets for the specified MessageQueues. */
+        Map<MessageQueue, Long> endOffsets(Collection<MessageQueue> messageQueues);
 
-        /** List max offsets for the specified MessageQueues. */
+        /** List offsets for the specified timestamp. */
         Map<MessageQueue, Long> offsetsForTimes(Map<MessageQueue, Long> messageQueueWithTimeMap);
     }
 }

@@ -55,16 +55,16 @@ public class OffsetsSelectorBySpecified implements OffsetsSelector, OffsetsValid
         }
         if (!toLookup.isEmpty()) {
             // First check the committed offsets.
-            Map<MessageQueue, Long> committedOffsets = offsetsRetriever.committedOffsets(toLookup);
+            Map<MessageQueue, Long> committedOffsets = offsetsRetriever.committed(toLookup);
             offsets.putAll(committedOffsets);
             toLookup.removeAll(committedOffsets.keySet());
 
             switch (offsetResetStrategy) {
                 case EARLIEST:
-                    offsets.putAll(offsetsRetriever.minOffsets(toLookup));
+                    offsets.putAll(offsetsRetriever.beginOffsets(toLookup));
                     break;
                 case LATEST:
-                    offsets.putAll(offsetsRetriever.maxOffsets(toLookup));
+                    offsets.putAll(offsetsRetriever.endOffsets(toLookup));
                     break;
                 default:
                     throw new IllegalStateException(

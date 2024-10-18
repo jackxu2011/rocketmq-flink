@@ -37,7 +37,7 @@ class OffsetsSelectorByTimestamp implements OffsetsSelector {
     public Map<MessageQueue, Long> getMessageQueueOffsets(
             Collection<MessageQueue> messageQueues, MessageQueueOffsetsRetriever offsetsRetriever) {
         Map<MessageQueue, Long> startingTimestamps = new HashMap<>();
-        Map<MessageQueue, Long> initialOffsets = new HashMap<>();
+        Map<MessageQueue, Long> results = new HashMap<>();
 
         // First get the current end offsets of the partitions. This is going to be used
         // in case we cannot find a suitable offsets based on the timestamp, i.e. the message
@@ -45,19 +45,14 @@ class OffsetsSelectorByTimestamp implements OffsetsSelector {
         // in this case, we just use the latest offset.
         // We need to get the latest offsets before querying offsets by time to ensure that
         // no message is going to be missed.
-        Map<MessageQueue, Long> endOffsets = offsetsRetriever.maxOffsets(messageQueues);
+        Map<MessageQueue, Long> endOffsets = offsetsRetriever.endOffsets(messageQueues);
         messageQueues.forEach(tp -> startingTimestamps.put(tp, startingTimestamp));
         offsetsRetriever
                 .offsetsForTimes(startingTimestamps)
                 .forEach(
-                        (mq, offsetByTimestamp) -> {
-                            long offset =
-                                    offsetByTimestamp != null
-                                            ? offsetByTimestamp
-                                            : endOffsets.get(mq);
-                            initialOffsets.put(mq, offset);
-                        });
-        return initialOffsets;
+                        (mq, offset) ->
+                                results.put(mq, offset != null ? offset : endOffsets.get(mq)));
+        return results;
     }
 
     @Override

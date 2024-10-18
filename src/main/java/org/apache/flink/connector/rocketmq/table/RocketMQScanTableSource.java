@@ -217,7 +217,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
                 rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.latest());
                 break;
             case GROUP_OFFSETS:
-                rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.committedOffsets());
+                rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.committed());
                 break;
             case TIMESTAMP:
                 rocketMQSourceBuilder.setStartingOffsets(
@@ -233,7 +233,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
                 rocketMQSourceBuilder.setBounded(OffsetsSelector.latest());
                 break;
             case GROUP_OFFSETS:
-                rocketMQSourceBuilder.setBounded(OffsetsSelector.committedOffsets());
+                rocketMQSourceBuilder.setBounded(OffsetsSelector.committed());
                 break;
             case TIMESTAMP:
                 rocketMQSourceBuilder.setBounded(

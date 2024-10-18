@@ -57,7 +57,7 @@ public class RocketMQSourceBuilder<OUT> {
 
     public RocketMQSourceBuilder() {
         this.configBuilder = new RocketMQConfigBuilder();
-        this.setStartingOffsets(OffsetsSelector.committedOffsets());
+        this.setStartingOffsets(OffsetsSelector.committed());
         this.setUnbounded(new OffsetsSelectorNoStopping());
     }
 

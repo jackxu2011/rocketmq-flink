@@ -38,18 +38,16 @@ public class OffsetsSelectorByStrategy implements OffsetsSelector, OffsetsValida
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public Map<MessageQueue, Long> getMessageQueueOffsets(
             Collection<MessageQueue> messageQueues, MessageQueueOffsetsRetriever offsetsRetriever) {
 
         switch (consumeFromWhere) {
             case CONSUME_FROM_FIRST_OFFSET:
-                return offsetsRetriever.minOffsets(messageQueues);
-            case CONSUME_FROM_MAX_OFFSET:
-                return offsetsRetriever.maxOffsets(messageQueues);
+                return offsetsRetriever.beginOffsets(messageQueues);
             case CONSUME_FROM_LAST_OFFSET:
+                return offsetsRetriever.endOffsets(messageQueues);
             default:
-                return offsetsRetriever.committedOffsets(messageQueues);
+                return offsetsRetriever.committed(messageQueues);
         }
     }
 

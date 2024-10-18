@@ -23,32 +23,11 @@ import org.apache.rocketmq.common.message.MessageQueue;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface InnerConsumer extends AutoCloseable {
-
-    /** start inner consumer */
-    void start();
-
-    /** Get the consumer group of the consumer. */
-    String getConsumerGroup();
-
-    /**
-     * Fetch message queues of the topic.
-     *
-     * @param topic topic list
-     * @return key is topic, values are message queue collections
-     */
-    CompletableFuture<Collection<MessageQueue>> fetchMessageQueues(String topic);
-
-    /**
-     * Manually assign a list of message queues to this consumer. This interface does not allow for
-     * incremental assignment and will replace the previous assignment (if there is one).
-     *
-     * @param messageQueues Message queues that needs to be assigned.
-     */
-    void assign(Collection<MessageQueue> messageQueues);
 
     /**
      * Returns a set of message queues that are assigned to the current consumer. The assignment is
@@ -59,6 +38,17 @@ public interface InnerConsumer extends AutoCloseable {
      */
     Set<MessageQueue> assignment();
 
+    /** start inner consumer */
+    void start();
+
+    /**
+     * Manually assign a list of message queues to this consumer. This interface does not allow for
+     * incremental assignment and will replace the previous assignment (if there is one).
+     *
+     * @param messageQueues Message queues that needs to be assigned.
+     */
+    void assign(Collection<MessageQueue> messageQueues);
+
     /**
      * Fetch data for the topics or partitions specified using assign API
      *
@@ -66,8 +56,136 @@ public interface InnerConsumer extends AutoCloseable {
      */
     ConsumerRecords poll(Duration timeout);
 
-    /** interrupt poll message */
-    void wakeup();
+    /** Manually commit consume offset saved by the system. This is a non-blocking method. */
+    void commit();
+
+    /**
+     * Offset specified by batch commit
+     *
+     * @param offsetMap Offset specified by batch commit
+     * @param persist Whether to persist to the broker
+     */
+    void commit(Map<MessageQueue, Long> offsetMap, boolean persist);
+
+    /**
+     * Manually commit consume offset saved by the system.
+     *
+     * @param messageQueues Message queues that need to submit consumer offset
+     * @param persist hether to persist to the broker
+     */
+    void commit(final Set<MessageQueue> messageQueues, boolean persist);
+
+    /**
+     * Offset specified by batch commit, incremental, and not persist
+     *
+     * @param offsetMap Offset specified by batch commit
+     */
+    CompletableFuture<Void> commitAsync(Map<MessageQueue, Long> offsetMap);
+
+    /**
+     * Overrides the fetch offsets that the consumer will use on the next poll. If this method is
+     * invoked for the same message queue more than once, the latest offset will be used on the next
+     * {@link #poll(Duration)}.
+     *
+     * @param messageQueue the message queue to override the fetch offset.
+     * @param offset message offset.
+     */
+    void seek(MessageQueue messageQueue, long offset);
+
+    /**
+     * Overrides the fetch offsets with the begin offset that the consumer will use on the next
+     * poll. If this API is invoked for the same message queue more than once, the latest offset
+     * will be used on the next poll(). Note that you may lose data if this API is arbitrarily used
+     * in the middle of consumption.
+     *
+     * @param messageQueue
+     */
+    void seekToBegin(MessageQueue messageQueue);
+
+    /**
+     * Overrides the fetch offsets with the end offset that the consumer will use on the next poll.
+     * If this API is invoked for the same message queue more than once, the latest offset will be
+     * used on the next poll(). Note that you may lose data if this API is arbitrarily used in the
+     * middle of consumption.
+     *
+     * @param messageQueue rocketmq queue to locate single queue
+     */
+    void seekToEnd(MessageQueue messageQueue);
+
+    /**
+     * Get consumer group previously committed offset
+     *
+     * @param messageQueue rocketmq queue to locate single queue
+     * @return offset for message queue
+     */
+    long committed(MessageQueue messageQueue);
+
+    /**
+     * Get consumer group previously committed offset
+     *
+     * @param messageQueues rocketmq queue to locate queues
+     * @return offset for message queue
+     */
+    Map<MessageQueue, Long> committed(Collection<MessageQueue> messageQueues);
+
+    /** Get the consumer group of the consumer. */
+    String getConsumerGroup();
+
+    /**
+     * Fetch partitions(message queues) of the topic.
+     *
+     * @param topic topic list
+     * @return key is topic, values are message queue collections
+     */
+    Collection<MessageQueue> partitionsFor(String topic);
+
+    /**
+     * Get the consumer group's beginning offset
+     *
+     * @param messageQueue rocketmq queue to locate single queue
+     * @return offset for message queue
+     */
+    long beginOffset(MessageQueue messageQueue);
+
+    /**
+     * Get the consumer group's begin offsets
+     *
+     * @param messageQueues rocketmq queue to locate single queue
+     * @return offset for message queues
+     */
+    Map<MessageQueue, Long> beginOffsets(Collection<MessageQueue> messageQueues);
+
+    /**
+     * Get the consumer group's end offsets
+     *
+     * @param messageQueues rocketmq queue to locate single queue
+     * @return offset for message queues
+     */
+    Map<MessageQueue, Long> endOffsets(Collection<MessageQueue> messageQueues);
+
+    /**
+     * Get the consumer group's beginning offset
+     *
+     * @param messageQueue rocketmq queue to locate single queue
+     * @return offset for message queue
+     */
+    long endOffset(MessageQueue messageQueue);
+
+    /**
+     * Get the consumer group's offset by timestamp
+     *
+     * @param messageQueue rocketmq queue to locate single queue
+     * @return offset for message queue
+     */
+    long offsetForTime(MessageQueue messageQueue, long timestamp);
+
+    /**
+     * Get the consumer group's offset by timestamp
+     *
+     * @param messageQueueWithTimeMap rocketmq queue and timestamp map
+     * @return offset for message queue
+     */
+    Map<MessageQueue, Long> offsetsForTimes(Map<MessageQueue, Long> messageQueueWithTimeMap);
 
     /**
      * Suspending message pulling from the message queues.
@@ -83,62 +201,6 @@ public interface InnerConsumer extends AutoCloseable {
      */
     void resume(Collection<MessageQueue> messageQueues);
 
-    /**
-     * Overrides the fetch offsets that the consumer will use on the next poll. If this method is
-     * invoked for the same message queue more than once, the latest offset will be used on the next
-     * {@link #poll(Duration)}.
-     *
-     * @param messageQueue the message queue to override the fetch offset.
-     * @param offset message offset.
-     */
-    void seek(MessageQueue messageQueue, long offset);
-
-    /**
-     * Seek consumer group previously committed offset
-     *
-     * @param messageQueue rocketmq queue to locate single queue
-     * @return offset for message queue
-     */
-    Long position(MessageQueue messageQueue);
-
-    /**
-     * Seek consumer group previously committed offset
-     *
-     * @param messageQueue rocketmq queue to locate single queue
-     * @return offset for message queue
-     */
-    CompletableFuture<Long /*offset*/> seekCommittedOffset(MessageQueue messageQueue);
-
-    /**
-     * Seek consumer group previously committed offset
-     *
-     * @param messageQueue rocketmq queue to locate single queue
-     * @return offset for message queue
-     */
-    CompletableFuture<Long /*offset*/> seekMinOffset(MessageQueue messageQueue);
-
-    /**
-     * Seek consumer group previously committed offset
-     *
-     * @param messageQueue rocketmq queue to locate single queue
-     * @return offset for message queue
-     */
-    CompletableFuture<Long /*offset*/> seekMaxOffset(MessageQueue messageQueue);
-
-    /**
-     * Seek consumer group previously committed offset
-     *
-     * @param messageQueue rocketmq queue to locate single queue
-     * @return offset for message queue
-     */
-    CompletableFuture<Long /*offset*/> seekOffsetByTimestamp(
-            MessageQueue messageQueue, long timestamp);
-
-    /**
-     * Seek consumer group previously committed offset
-     *
-     * @param messageQueue rocketmq queue to locate single queue
-     * @return offset for message queue
-     */
-    CompletableFuture<Void> commitOffset(MessageQueue messageQueue, long offset);
+    /** interrupt poll message */
+    void wakeup();
 }

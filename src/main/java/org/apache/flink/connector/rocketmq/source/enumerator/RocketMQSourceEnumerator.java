@@ -27,7 +27,7 @@ import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.connector.source.SplitsAssignment;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.source.InnerConsumer;
-import org.apache.flink.connector.rocketmq.source.InnerConsumerImpl;
+import org.apache.flink.connector.rocketmq.source.RocketMQConsumer;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategy;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
@@ -52,7 +52,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /** The enumerator class for RocketMQ source. */
 @Internal
@@ -124,7 +123,7 @@ public class RocketMQSourceEnumerator
 
     @Override
     public void start() {
-        consumer = new InnerConsumerImpl(configuration);
+        consumer = new RocketMQConsumer(configuration);
         consumer.start();
 
         if (partitionDiscoveryIntervalMs > 0) {
@@ -214,18 +213,7 @@ public class RocketMQSourceEnumerator
                                 .orElseGet(Collections::emptyList));
 
         return topicSet.stream()
-                .flatMap(
-                        topic -> {
-                            try {
-                                return consumer.fetchMessageQueues(topic).get().stream();
-                            } catch (Exception e) {
-                                log.error(
-                                        "Request topic route for service discovery error, topic={}",
-                                        topic,
-                                        e);
-                            }
-                            return Stream.empty();
-                        })
+                .flatMap(topic -> consumer.partitionsFor(topic).stream())
                 .collect(Collectors.toSet());
     }
 
@@ -250,7 +238,7 @@ public class RocketMQSourceEnumerator
         Set<MessageQueue> increaseSet = sourceChangeResult.getIncreaseSet();
 
         OffsetsSelector.MessageQueueOffsetsRetriever offsetsRetriever =
-                new InnerConsumerImpl.RemotingOffsetsRetrieverImpl(consumer);
+                new RocketMQConsumer.RemotingOffsetsRetrieverImpl(consumer);
 
         Map<MessageQueue, Long> startingOffsets =
                 startingOffsetsSelector.getMessageQueueOffsets(increaseSet, offsetsRetriever);
