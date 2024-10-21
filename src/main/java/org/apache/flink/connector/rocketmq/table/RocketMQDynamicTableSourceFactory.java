@@ -44,12 +44,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.ENDPOINTS;
+import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.FILTER_SQL;
+import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.FILTER_TAG;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.GROUP;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.KEY_FIELDS;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.KEY_FIELDS_PREFIX;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_BOUNDED_MODE;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_BOUNDED_TIMESTAMP_MILLIS;
-import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_FILTER_TAG;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_STARTUP_MODE;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SINK_PARALLELISM;
@@ -61,7 +62,6 @@ import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.createKeyFormatProjection;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.createValueFormatProjection;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getBoundedOptions;
-import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getFilterTag;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getGroup;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getRocketMQProperties;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getStartupOptions;
@@ -99,7 +99,8 @@ public class RocketMQDynamicTableSourceFactory implements DynamicTableSourceFact
         optionalOptions.add(VALUE_FORMAT);
         optionalOptions.add(VALUE_FIELDS_INCLUDE);
         optionalOptions.add(GROUP);
-        optionalOptions.add(SCAN_FILTER_TAG);
+        optionalOptions.add(FILTER_TAG);
+        optionalOptions.add(FILTER_SQL);
         optionalOptions.add(SCAN_STARTUP_MODE);
         optionalOptions.add(SCAN_STARTUP_TIMESTAMP_MILLIS);
         optionalOptions.add(SCAN_BOUNDED_MODE);
@@ -162,7 +163,6 @@ public class RocketMQDynamicTableSourceFactory implements DynamicTableSourceFact
                 keyPrefix,
                 getTopics(tableOptions),
                 getGroup(tableOptions),
-                getFilterTag(tableOptions),
                 tableOptions.get(ENDPOINTS),
                 properties,
                 startupOptions,

@@ -100,7 +100,7 @@ public class RocketMQDynamicTableSourceFactoryTest {
         options.put("connector", IDENTIFIER);
         options.put(RocketMQConnectorOptions.TOPIC.key(), TOPIC);
         options.put(RocketMQConnectorOptions.GROUP.key(), CONSUMER_GROUP);
-        options.put(RocketMQConnectorOptions.SCAN_FILTER_TAG.key(), "test_tag");
+        options.put(RocketMQConnectorOptions.FILTER_TAG.key(), "test_tag");
         createTableSource(options);
     }
 

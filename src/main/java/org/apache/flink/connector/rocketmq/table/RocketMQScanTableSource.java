@@ -101,7 +101,6 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
     protected final List<String> topics;
 
     private final String consumerGroup;
-    private final String tag;
 
     private final String endpoints;
 
@@ -124,7 +123,6 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
             @Nullable String keyPrefix,
             @Nullable List<String> topics,
             @Nullable String group,
-            @Nullable String tag,
             String endpoints,
             Properties properties,
             StartupOptions startupOptions,
@@ -150,7 +148,6 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
         // RocketMQ-specific attributes
         this.topics = Preconditions.checkNotNull(topics, "Topic must not be null.");
         this.consumerGroup = group;
-        this.tag = tag;
         this.endpoints = endpoints;
         this.properties = Preconditions.checkNotNull(properties, "Properties must not be null.");
         this.startupOptions =
@@ -281,7 +278,6 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
                         keyPrefix,
                         topics,
                         consumerGroup,
-                        tag,
                         endpoints,
                         properties,
                         startupOptions,

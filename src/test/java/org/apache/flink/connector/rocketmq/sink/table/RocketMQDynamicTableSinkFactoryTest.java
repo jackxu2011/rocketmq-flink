@@ -97,7 +97,7 @@ public class RocketMQDynamicTableSinkFactoryTest {
         options.put(
                 RocketMQConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS.key(),
                 String.valueOf(System.currentTimeMillis()));
-        options.put(RocketMQConnectorOptions.SCAN_FILTER_TAG.key(), "test_tag");
+        options.put(RocketMQConnectorOptions.FILTER_TAG.key(), "test_tag");
         createDynamicTableSink(options);
     }
 

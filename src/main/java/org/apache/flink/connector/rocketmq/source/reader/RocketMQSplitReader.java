@@ -127,37 +127,14 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
             }
         }
 
-        // Only track non-empty partition's record lag if it never appears before
-        //        records
-        //                .partitions()
-        //                .forEach(
-        //                        trackTp -> {
-        //                            rocketmqSourceReaderMetrics.maybeAddRecordsLagMetric(consumer,
-        // trackTp);
-        //                        });
-
         markEmptySplitsAsFinished(recordsBySplits);
 
         // Unassign the partitions that has finished.
         if (!finishedPartitions.isEmpty()) {
-            //
-            // finishedPartitions.forEach(rocketmqSourceReaderMetrics::removeRecordsLagMetric);
             unassignPartitions(finishedPartitions);
         }
 
-        // Update numBytesIn
-        //        rocketmqSourceReaderMetrics.updateNumBytesInCounter();
-
         return recordsBySplits;
-    }
-
-    private void markEmptySplitsAsFinished(RocketMQSplitRecords recordsBySplits) {
-        // Some splits are discovered as empty when handling split additions. These splits should be
-        // added to finished splits to clean up states in split fetcher and source reader.
-        if (!emptySplits.isEmpty()) {
-            recordsBySplits.finishedSplits.addAll(emptySplits);
-            emptySplits.clear();
-        }
     }
 
     @Override
@@ -183,7 +160,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
                                     messageQueue,
                                     new Tuple2<>(
                                             split.getStartingOffset(), split.getStoppingOffset()));
-                            rocketmqSourceReaderMetrics.registerNewMessageQueue(messageQueue);
+                            rocketmqSourceReaderMetrics.registerMessageQueue(messageQueue);
                         });
 
         // todo: log message queue change
@@ -225,6 +202,15 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
             consumer.close();
         } catch (Exception e) {
             LOG.error("close consumer error", e);
+        }
+    }
+
+    private void markEmptySplitsAsFinished(RocketMQSplitRecords recordsBySplits) {
+        // Some splits are discovered as empty when handling split additions. These splits should be
+        // added to finished splits to clean up states in split fetcher and source reader.
+        if (!emptySplits.isEmpty()) {
+            recordsBySplits.finishedSplits.addAll(emptySplits);
+            emptySplits.clear();
         }
     }
 
@@ -344,8 +330,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
                 final MessageView record = recordIterator.next();
                 // Only emit records before stopping offset
                 if (record.getQueueOffset() < currentSplitStoppingOffset) {
-                    //                    metrics.recordCurrentOffset(currentTopicPartition,
-                    // record.offset());
+                    metrics.recordCurrentOffset(currentTopicPartition, record.getQueueOffset());
                     return record;
                 }
             }

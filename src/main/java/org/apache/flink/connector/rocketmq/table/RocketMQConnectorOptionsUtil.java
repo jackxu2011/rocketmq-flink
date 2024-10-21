@@ -20,12 +20,13 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.IntStream;
 
+import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.FILTER_SQL;
+import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.FILTER_TAG;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.GROUP;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.KEY_FIELDS;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.KEY_FIELDS_PREFIX;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_BOUNDED_MODE;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_BOUNDED_TIMESTAMP_MILLIS;
-import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_FILTER_TAG;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_STARTUP_MODE;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.TOPIC;
@@ -40,8 +41,28 @@ public class RocketMQConnectorOptionsUtil {
     // Validation
     // --------------------------------------------------------------------------------------------
     public static void validateTableSourceOptions(ReadableConfig tableOptions) {
+        validateFilterOptions(tableOptions);
+        validateConsumerGroup(tableOptions);
         validateScanStartupMode(tableOptions);
         validateScanBoundedMode(tableOptions);
+    }
+
+    private static void validateConsumerGroup(ReadableConfig tableOptions) {
+        if (!tableOptions.getOptional(GROUP).isPresent()) {
+            throw new ValidationException(
+                    String.format("Option '%s' is required in consumer group mode.", GROUP.key()));
+        }
+    }
+
+    private static void validateFilterOptions(ReadableConfig tableOptions) {
+        Optional<String> filterTag = tableOptions.getOptional(FILTER_TAG);
+        Optional<String> filterSql = tableOptions.getOptional(FILTER_SQL);
+        if (filterTag.isPresent() && filterSql.isPresent()) {
+            throw new ValidationException(
+                    String.format(
+                            "Only one of '%s' and '%s' can be provided.",
+                            FILTER_TAG.key(), FILTER_SQL.key()));
+        }
     }
 
     private static void validateScanStartupMode(ReadableConfig tableOptions) {
@@ -96,10 +117,6 @@ public class RocketMQConnectorOptionsUtil {
 
     public static String getGroup(ReadableConfig tableOptions) {
         return tableOptions.getOptional(GROUP).orElse(null);
-    }
-
-    public static String getFilterTag(ReadableConfig tableOptions) {
-        return tableOptions.getOptional(SCAN_FILTER_TAG).orElse(null);
     }
 
     private static boolean isSingleTopic(ReadableConfig tableOptions) {

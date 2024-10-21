@@ -139,6 +139,20 @@ public class RocketMQConnectorOptions {
     public static final ConfigOption<Boolean> GLOBAL_DEBUG_MODE =
             ConfigOptions.key(CLIENT_CONFIG_PREFIX + "debug").booleanType().defaultValue(false);
 
+    public static final ConfigOption<String> FILTER_TAG =
+            ConfigOptions.key(CLIENT_CONFIG_PREFIX + "filter.tag")
+                    .stringType()
+                    .defaultValue("*")
+                    .withDescription(
+                            "for message filter, rocketmq only support single filter option");
+
+    public static final ConfigOption<String> FILTER_SQL =
+            ConfigOptions.key(CLIENT_CONFIG_PREFIX + "filter.sql")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription(
+                            "for message filter, rocketmq only support single filter option");
+
     // --------------------------------------------------------------------------------------------
     // Scan specific options
     // --------------------------------------------------------------------------------------------
@@ -168,12 +182,6 @@ public class RocketMQConnectorOptions {
                     .noDefaultValue()
                     .withDescription(
                             "Optional timestamp used in case of \"timestamp\" bounded mode");
-    public static final ConfigOption<String> SCAN_FILTER_TAG =
-            ConfigOptions.key("scan.filter.tag")
-                    .stringType()
-                    .defaultValue("*")
-                    .withDescription(
-                            "for message filter, rocketmq only support single filter option");
 
     // --------------------------------------------------------------------------------------------
     // Sink specific options
