@@ -20,6 +20,8 @@ package org.apache.flink.connector.rocketmq.source.split;
 
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
+import org.apache.rocketmq.common.message.MessageQueue;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -30,7 +32,6 @@ import java.io.IOException;
 public class RocketMQPartitionSplitSerializer
         implements SimpleVersionedSerializer<RocketMQPartitionSplit> {
 
-    private static final int SNAPSHOT_VERSION = 0;
     private static final int CURRENT_VERSION = 1;
 
     @Override
@@ -46,7 +47,8 @@ public class RocketMQPartitionSplitSerializer
             out.writeUTF(split.getBrokerName());
             out.writeInt(split.getQueueId());
             out.writeLong(split.getStartingOffset());
-            out.writeLong(split.getStoppingOffset());
+            out.writeLong(
+                    split.getStoppingOffset().orElse(RocketMQPartitionSplit.NO_STOPPING_OFFSET));
             out.flush();
             return byteArrayOutputStream.toByteArray();
         }
@@ -58,11 +60,11 @@ public class RocketMQPartitionSplitSerializer
                 DataInputStream in = new DataInputStream(byteArrayInputStream)) {
             String topic = in.readUTF();
             String broker = in.readUTF();
-            int partition = in.readInt();
+            int queue = in.readInt();
             long startingOffset = in.readLong();
             long stoppingOffset = in.readLong();
             return new RocketMQPartitionSplit(
-                    topic, broker, partition, startingOffset, stoppingOffset);
+                    new MessageQueue(topic, broker, queue), startingOffset, stoppingOffset);
         }
     }
 }

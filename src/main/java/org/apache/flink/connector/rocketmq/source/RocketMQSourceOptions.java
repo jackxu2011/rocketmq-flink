@@ -35,6 +35,20 @@ public class RocketMQSourceOptions {
                     .defaultValue(true)
                     .withDescription("Whether to commit consuming offset on checkpoint.");
 
+    /** for auto commit offset to rocketmq server */
+    public static final ConfigOption<Boolean> AUTO_COMMIT_OFFSET =
+            ConfigOptions.key("offset.commit.auto")
+                    .booleanType()
+                    .defaultValue(true)
+                    .withDescription("The setting for automatic commit of offset");
+
+    public static final ConfigOption<Long> AUTO_COMMIT_OFFSET_INTERVAL =
+            ConfigOptions.key("offset.commit.interval")
+                    .longType()
+                    .defaultValue(5 * 1000L)
+                    .withDescription(
+                            "Applies to Consumer, the interval for persisting consumption progress");
+
     public static final ConfigOption<Long> PARTITION_DISCOVERY_INTERVAL_MS =
             ConfigOptions.key("partition.discovery.interval.ms")
                     .longType()
@@ -42,23 +56,17 @@ public class RocketMQSourceOptions {
                     .withDescription(
                             "Time interval for polling route information from nameserver or proxy");
 
-    public static final ConfigOption<Long> POLL_TIMEOUT =
-            ConfigOptions.key("poll.timeout")
-                    .longType()
-                    .defaultValue(10000L)
-                    .withDescription("how long to wait before giving up, the unit is milliseconds");
-
-    public static final ConfigOption<Boolean> OPTIONAL_COLUMN_ERROR_DEBUG =
-            ConfigOptions.key("column.error.debug")
-                    .booleanType()
-                    .defaultValue(true)
-                    .withDescription("If object deserialize failed, would print error message");
-
     public static final ConfigOption<String> ALLOCATE_MESSAGE_QUEUE_STRATEGY =
             ConfigOptions.key("allocate.strategy")
                     .stringType()
                     .defaultValue(AllocateStrategyFactory.STRATEGY_NAME_CONSISTENT_HASH)
                     .withDescription("The load balancing strategy algorithm");
+
+    public static final ConfigOption<Long> POLL_TIMEOUT =
+            ConfigOptions.key("poll.timeout")
+                    .longType()
+                    .defaultValue(10000L)
+                    .withDescription("how long to wait before giving up, the unit is milliseconds");
 
     // pull message limit
     public static final ConfigOption<Integer> PULL_THREADS_NUM =
@@ -85,12 +93,6 @@ public class RocketMQSourceOptions {
                     .defaultValue(10 * 1000L)
                     .withDescription("The threshold for flow control of consumed requests");
 
-    public static final ConfigOption<Long> PULL_TIMEOUT_MILLIS =
-            ConfigOptions.key("pull.rpc.timeout")
-                    .longType()
-                    .defaultValue(20 * 1000L)
-                    .withDescription("The polling timeout setting");
-
     public static final ConfigOption<Long> PULL_TIME_DELAY_MILLS_WHEN_EXCEPTION =
             ConfigOptions.key("pull.rpc.exception.delay")
                     .longType()
@@ -106,20 +108,6 @@ public class RocketMQSourceOptions {
                     .withDescription(
                             "The maximum wait time for a response from the broker "
                                     + "in long polling by the client");
-
-    /** for auto commit offset to rocketmq server */
-    public static final ConfigOption<Boolean> AUTO_COMMIT_OFFSET =
-            ConfigOptions.key("offset.commit.auto")
-                    .booleanType()
-                    .defaultValue(true)
-                    .withDescription("The setting for automatic commit of offset");
-
-    public static final ConfigOption<Long> AUTO_COMMIT_OFFSET_INTERVAL =
-            ConfigOptions.key("offset.commit.interval")
-                    .longType()
-                    .defaultValue(5 * 1000L)
-                    .withDescription(
-                            "Applies to Consumer, the interval for persisting consumption progress");
 
     /** for message trace, suggest not enable when heavy traffic */
     public static final ConfigOption<Boolean> ENABLE_MESSAGE_TRACE =

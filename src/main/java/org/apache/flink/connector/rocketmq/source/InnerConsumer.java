@@ -201,6 +201,6 @@ public interface InnerConsumer extends AutoCloseable {
      */
     void resume(Collection<MessageQueue> messageQueues);
 
-    /** interrupt poll message */
+    /** Wake up the split reader in case the fetcher thread is blocking in fetch() */
     void wakeup();
 }

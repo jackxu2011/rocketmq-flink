@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class OffsetsSelectorBySpecified implements OffsetsSelector, OffsetsValidator {
+public class OffsetsInitializerBySpecified implements OffsetsInitializer, OffsetsValidator {
 
     private final Map<MessageQueue, Long> initialOffsets;
     private final OffsetResetStrategy offsetResetStrategy;
 
-    OffsetsSelectorBySpecified(
+    OffsetsInitializerBySpecified(
             Map<MessageQueue, Long> initialOffsets, OffsetResetStrategy offsetResetStrategy) {
         this.initialOffsets = Collections.unmodifiableMap(initialOffsets);
         this.offsetResetStrategy = offsetResetStrategy;

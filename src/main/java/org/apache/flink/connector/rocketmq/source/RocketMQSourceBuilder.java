@@ -23,7 +23,7 @@ import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigBuilder;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
+import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelectorNoStopping;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
@@ -46,8 +46,8 @@ public class RocketMQSourceBuilder<OUT> {
     protected final RocketMQConfigBuilder configBuilder;
 
     // Users can specify the starting / stopping offset initializer.
-    private OffsetsSelector startingOffsetSelector;
-    private OffsetsSelector stoppingOffsetsSelector;
+    private OffsetsInitializer startingOffsetSelector;
+    private OffsetsInitializer stoppingOffsetsSelector;
 
     // Boundedness
     private Boundedness boundedness;
@@ -57,7 +57,7 @@ public class RocketMQSourceBuilder<OUT> {
 
     public RocketMQSourceBuilder() {
         this.configBuilder = new RocketMQConfigBuilder();
-        this.setStartingOffsets(OffsetsSelector.committed());
+        this.setStartingOffsets(OffsetsInitializer.committed());
         this.setUnbounded(new OffsetsSelectorNoStopping());
     }
 
@@ -106,18 +106,18 @@ public class RocketMQSourceBuilder<OUT> {
         return this.setTopics(Arrays.asList(topics));
     }
 
-    public RocketMQSourceBuilder<OUT> setStartingOffsets(OffsetsSelector offsetsSelector) {
-        this.startingOffsetSelector = offsetsSelector;
+    public RocketMQSourceBuilder<OUT> setStartingOffsets(OffsetsInitializer offsetsInitializer) {
+        this.startingOffsetSelector = offsetsInitializer;
         return this;
     }
 
-    public RocketMQSourceBuilder<OUT> setUnbounded(OffsetsSelector stoppingOffsetsSelector) {
+    public RocketMQSourceBuilder<OUT> setUnbounded(OffsetsInitializer stoppingOffsetsSelector) {
         this.boundedness = Boundedness.CONTINUOUS_UNBOUNDED;
         this.stoppingOffsetsSelector = stoppingOffsetsSelector;
         return this;
     }
 
-    public RocketMQSourceBuilder<OUT> setBounded(OffsetsSelector stoppingOffsetsSelector) {
+    public RocketMQSourceBuilder<OUT> setBounded(OffsetsInitializer stoppingOffsetsSelector) {
         this.boundedness = Boundedness.BOUNDED;
         this.stoppingOffsetsSelector = stoppingOffsetsSelector;
         return this;

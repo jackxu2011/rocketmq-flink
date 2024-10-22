@@ -34,13 +34,13 @@ import org.apache.flink.connector.base.source.reader.synchronization.FutureCompl
 import org.apache.flink.connector.rocketmq.source.enumerator.RocketMQSourceEnumState;
 import org.apache.flink.connector.rocketmq.source.enumerator.RocketMQSourceEnumStateSerializer;
 import org.apache.flink.connector.rocketmq.source.enumerator.RocketMQSourceEnumerator;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
+import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.metrics.RocketMQSourceReaderMetrics;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
+import org.apache.flink.connector.rocketmq.source.reader.RocketMQPartitionSplitReader;
 import org.apache.flink.connector.rocketmq.source.reader.RocketMQRecordEmitter;
 import org.apache.flink.connector.rocketmq.source.reader.RocketMQSourceFetcherManager;
 import org.apache.flink.connector.rocketmq.source.reader.RocketMQSourceReader;
-import org.apache.flink.connector.rocketmq.source.reader.RocketMQSplitReader;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplitSerializer;
@@ -62,8 +62,8 @@ public class RocketMQSource<OUT>
     private static final Logger log = LoggerFactory.getLogger(RocketMQSource.class);
 
     // Users can specify the starting / stopping offset initializer.
-    private final OffsetsSelector startingOffsetsSelector;
-    private final OffsetsSelector stoppingOffsetsSelector;
+    private final OffsetsInitializer startingOffsetsSelector;
+    private final OffsetsInitializer stoppingOffsetsSelector;
 
     // The configurations.
     private final Configuration configuration;
@@ -75,8 +75,8 @@ public class RocketMQSource<OUT>
     private final RocketMQDeserializationSchema<OUT> deserializationSchema;
 
     public RocketMQSource(
-            OffsetsSelector startingOffsetsSelector,
-            OffsetsSelector stoppingOffsetsSelector,
+            OffsetsInitializer startingOffsetsSelector,
+            OffsetsInitializer stoppingOffsetsSelector,
             Boundedness boundedness,
             RocketMQDeserializationSchema<OUT> deserializationSchema,
             Configuration configuration) {
@@ -125,7 +125,9 @@ public class RocketMQSource<OUT>
                 new RocketMQSourceReaderMetrics(readerContext.metricGroup());
 
         Supplier<SplitReader<MessageView, RocketMQPartitionSplit>> splitReaderSupplier =
-                () -> new RocketMQSplitReader<>(configuration, rocketMQSourceReaderMetrics);
+                () ->
+                        new RocketMQPartitionSplitReader<>(
+                                configuration, rocketMQSourceReaderMetrics);
 
         RocketMQSourceFetcherManager rocketmqSourceFetcherManager =
                 new RocketMQSourceFetcherManager(

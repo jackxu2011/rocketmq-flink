@@ -82,7 +82,8 @@ public class RocketMQSourceFetcherManager
             SplitFetcher<MessageView, RocketMQPartitionSplit> splitFetcher,
             Map<MessageQueue, Long> offsetsToCommit) {
 
-        RocketMQSplitReader<?> splitReader = (RocketMQSplitReader<?>) splitFetcher.getSplitReader();
+        RocketMQPartitionSplitReader<?> splitReader =
+                (RocketMQPartitionSplitReader<?>) splitFetcher.getSplitReader();
 
         splitFetcher.enqueueTask(
                 new SplitFetcherTask() {

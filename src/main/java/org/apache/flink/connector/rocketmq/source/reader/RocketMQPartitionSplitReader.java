@@ -53,15 +53,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit.NO_STOPPING_OFFSET;
+
 /**
  * A {@link SplitReader} implementation that reads records from RocketMQ partitions.
  *
  * <p>The returned type are in the format of {@code tuple3(record, offset and timestamp}.
  */
 @Internal
-public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQPartitionSplit> {
+public class RocketMQPartitionSplitReader<T>
+        implements SplitReader<MessageView, RocketMQPartitionSplit> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RocketMQSplitReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RocketMQPartitionSplitReader.class);
 
     private final Duration POLL_TIMEOUT;
     private final InnerConsumer consumer;
@@ -74,7 +77,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
     // Tracking empty splits that has not been added to finished splits in fetch()
     private final Set<String> emptySplits = new HashSet<>();
 
-    public RocketMQSplitReader(
+    public RocketMQPartitionSplitReader(
             Configuration configuration, RocketMQSourceReaderMetrics rocketmqSourceReaderMetrics) {
 
         this.configuration = configuration;
@@ -159,7 +162,8 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
                             newOffsetTable.put(
                                     messageQueue,
                                     new Tuple2<>(
-                                            split.getStartingOffset(), split.getStoppingOffset()));
+                                            split.getStartingOffset(),
+                                            split.getStoppingOffset().orElse(NO_STOPPING_OFFSET)));
                             rocketmqSourceReaderMetrics.registerMessageQueue(messageQueue);
                         });
 
@@ -182,7 +186,7 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
                                 messageQueue, startingOffset);
                 throw new FlinkRuntimeException(info, e);
             }
-            if (entry.getValue().f1 != RocketMQPartitionSplit.NO_STOPPING_OFFSET) {
+            if (entry.getValue().f1 != NO_STOPPING_OFFSET) {
                 stoppingOffsets.put(messageQueue, entry.getValue().f1);
             }
         }
@@ -203,6 +207,20 @@ public class RocketMQSplitReader<T> implements SplitReader<MessageView, RocketMQ
         } catch (Exception e) {
             LOG.error("close consumer error", e);
         }
+    }
+
+    @Override
+    public void pauseOrResumeSplits(
+            Collection<RocketMQPartitionSplit> splitsToPause,
+            Collection<RocketMQPartitionSplit> splitsToResume) {
+        consumer.resume(
+                splitsToResume.stream()
+                        .map(RocketMQPartitionSplit::getMessageQueue)
+                        .collect(Collectors.toList()));
+        consumer.pause(
+                splitsToPause.stream()
+                        .map(RocketMQPartitionSplit::getMessageQueue)
+                        .collect(Collectors.toList()));
     }
 
     private void markEmptySplitsAsFinished(RocketMQSplitRecords recordsBySplits) {

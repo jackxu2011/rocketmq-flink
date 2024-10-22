@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @Internal
-public class OffsetsSelectorNoStopping implements OffsetsSelector {
+public class OffsetsSelectorNoStopping implements OffsetsInitializer {
 
     @Override
     public Map<MessageQueue, Long> getMessageQueueOffsets(

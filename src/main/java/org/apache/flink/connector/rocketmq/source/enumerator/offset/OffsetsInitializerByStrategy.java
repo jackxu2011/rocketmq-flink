@@ -26,12 +26,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
 
-public class OffsetsSelectorByStrategy implements OffsetsSelector, OffsetsValidator {
+public class OffsetsInitializerByStrategy implements OffsetsInitializer, OffsetsValidator {
 
     private final ConsumeFromWhere consumeFromWhere;
     private final OffsetResetStrategy offsetResetStrategy;
 
-    OffsetsSelectorByStrategy(
+    OffsetsInitializerByStrategy(
             ConsumeFromWhere consumeFromWhere, OffsetResetStrategy offsetResetStrategy) {
         this.consumeFromWhere = consumeFromWhere;
         this.offsetResetStrategy = offsetResetStrategy;

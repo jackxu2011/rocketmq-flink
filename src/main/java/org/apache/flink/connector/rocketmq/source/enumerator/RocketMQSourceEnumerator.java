@@ -31,7 +31,7 @@ import org.apache.flink.connector.rocketmq.source.RocketMQConsumer;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategy;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
+import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.util.FlinkRuntimeException;
@@ -65,8 +65,8 @@ public class RocketMQSourceEnumerator
     private final Boundedness boundedness;
     // Users can specify the starting / stopping offset initializer.
     private final AllocateStrategy allocateStrategy;
-    private final OffsetsSelector startingOffsetsSelector;
-    private final OffsetsSelector stoppingOffsetsSelector;
+    private final OffsetsInitializer startingOffsetsSelector;
+    private final OffsetsInitializer stoppingOffsetsSelector;
     // The internal states of the enumerator.
     // This set is only accessed by the partition discovery callable in the callAsync() method.
     // The current assignment by reader id. Only accessed by the coordinator thread.
@@ -80,8 +80,8 @@ public class RocketMQSourceEnumerator
     private InnerConsumer consumer;
 
     public RocketMQSourceEnumerator(
-            OffsetsSelector startingOffsetsSelector,
-            OffsetsSelector stoppingOffsetsSelector,
+            OffsetsInitializer startingOffsetsSelector,
+            OffsetsInitializer stoppingOffsetsSelector,
             Boundedness boundedness,
             Configuration configuration,
             SplitEnumeratorContext<RocketMQPartitionSplit> context) {
@@ -96,8 +96,8 @@ public class RocketMQSourceEnumerator
     }
 
     public RocketMQSourceEnumerator(
-            OffsetsSelector startingOffsetsSelector,
-            OffsetsSelector stoppingOffsetsSelector,
+            OffsetsInitializer startingOffsetsInitializer,
+            OffsetsInitializer stoppingOffsetsSelector,
             Boundedness boundedness,
             Configuration configuration,
             SplitEnumeratorContext<RocketMQPartitionSplit> context,
@@ -115,7 +115,7 @@ public class RocketMQSourceEnumerator
 
         // For rocketmq setting
         this.groupId = configuration.get(RocketMQConnectorOptions.GROUP);
-        this.startingOffsetsSelector = startingOffsetsSelector;
+        this.startingOffsetsSelector = startingOffsetsInitializer;
         this.stoppingOffsetsSelector = stoppingOffsetsSelector;
         this.partitionDiscoveryIntervalMs =
                 configuration.get(RocketMQSourceOptions.PARTITION_DISCOVERY_INTERVAL_MS);
@@ -237,7 +237,7 @@ public class RocketMQSourceEnumerator
     private SourceSplitChangeResult initializeSourceSplits(SourceChangeResult sourceChangeResult) {
         Set<MessageQueue> increaseSet = sourceChangeResult.getIncreaseSet();
 
-        OffsetsSelector.MessageQueueOffsetsRetriever offsetsRetriever =
+        OffsetsInitializer.MessageQueueOffsetsRetriever offsetsRetriever =
                 new RocketMQConsumer.RemotingOffsetsRetrieverImpl(consumer);
 
         Map<MessageQueue, Long> startingOffsets =

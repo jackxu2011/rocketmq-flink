@@ -25,11 +25,9 @@ public class RocketMQPartitionSplitState extends RocketMQPartitionSplit {
 
     public RocketMQPartitionSplitState(RocketMQPartitionSplit partitionSplit) {
         super(
-                partitionSplit.getTopic(),
-                partitionSplit.getBrokerName(),
-                partitionSplit.getQueueId(),
+                partitionSplit.getMessageQueue(),
                 partitionSplit.getStartingOffset(),
-                partitionSplit.getStoppingOffset());
+                partitionSplit.getStoppingOffset().orElse(NO_STOPPING_OFFSET));
         this.currentOffset = partitionSplit.getStartingOffset();
     }
 
@@ -48,6 +46,8 @@ public class RocketMQPartitionSplitState extends RocketMQPartitionSplit {
      */
     public RocketMQPartitionSplit getSourceSplit() {
         return new RocketMQPartitionSplit(
-                getTopic(), getBrokerName(), getQueueId(), getCurrentOffset(), getStoppingOffset());
+                getMessageQueue(),
+                getCurrentOffset(),
+                getStoppingOffset().orElse(NO_STOPPING_OFFSET));
     }
 }

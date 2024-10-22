@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-class OffsetsSelectorByTimestamp implements OffsetsSelector {
+class OffsetsSelectorByTimestamp implements OffsetsInitializer {
     private static final long serialVersionUID = 2932230571773627233L;
     private final long startingTimestamp;
 

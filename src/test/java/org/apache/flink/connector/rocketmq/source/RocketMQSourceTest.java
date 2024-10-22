@@ -6,7 +6,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.connector.rocketmq.example.ConnectorConfig;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
+import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
 import org.apache.flink.core.fs.FileSystem;
@@ -42,7 +42,7 @@ public class RocketMQSourceTest {
                         .setEndpoints(ConnectorConfig.ENDPOINTS)
                         .setGroupId(ConnectorConfig.CONSUMER_GROUP)
                         .setTopics(ConnectorConfig.SOURCE_TOPIC_1, ConnectorConfig.SOURCE_TOPIC_2)
-                        .setStartingOffsets(OffsetsSelector.earliest())
+                        .setStartingOffsets(OffsetsInitializer.earliest())
                         .setDeserializer(
                                 new RocketMQDeserializationSchema<String>() {
                                     @Override

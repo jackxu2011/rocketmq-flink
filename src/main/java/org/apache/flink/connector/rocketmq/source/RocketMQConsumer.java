@@ -20,7 +20,7 @@ package org.apache.flink.connector.rocketmq.source;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
+import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.reader.ConsumerRecords;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.MessageViewExt;
@@ -224,13 +224,14 @@ public class RocketMQConsumer implements InnerConsumer {
                 commonExecutorService);
     }
 
+    /** RocketMQ client don't have wakeup operator. only have resume messageQueue operator */
     @Override
     public void wakeup() {
         // wakeup long polling
         try {
             Set<MessageQueue> assignment = this.consumer.assignment();
             if (assignment != null) {
-                this.consumer.pause(assignment);
+                this.consumer.resume(assignment);
             }
         } catch (MQClientException e) {
             LOG.warn("Consume wakeup long polling failed", e);
@@ -422,7 +423,7 @@ public class RocketMQConsumer implements InnerConsumer {
     /** The implementation for offsets retriever with a consumer and an admin client. */
     @VisibleForTesting
     public static class RemotingOffsetsRetrieverImpl
-            implements OffsetsSelector.MessageQueueOffsetsRetriever, AutoCloseable {
+            implements OffsetsInitializer.MessageQueueOffsetsRetriever, AutoCloseable {
 
         private final InnerConsumer consumer;
 

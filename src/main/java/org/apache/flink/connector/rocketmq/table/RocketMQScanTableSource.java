@@ -23,7 +23,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.connector.rocketmq.source.RocketMQSource;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceBuilder;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelector;
+import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelectorNoStopping;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
@@ -208,17 +208,17 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
         rocketMQSourceBuilder.setEndpoints(endpoints);
         switch (startupOptions.startupMode) {
             case EARLIEST:
-                rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.earliest());
+                rocketMQSourceBuilder.setStartingOffsets(OffsetsInitializer.earliest());
                 break;
             case LATEST:
-                rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.latest());
+                rocketMQSourceBuilder.setStartingOffsets(OffsetsInitializer.latest());
                 break;
             case GROUP_OFFSETS:
-                rocketMQSourceBuilder.setStartingOffsets(OffsetsSelector.committed());
+                rocketMQSourceBuilder.setStartingOffsets(OffsetsInitializer.committed());
                 break;
             case TIMESTAMP:
                 rocketMQSourceBuilder.setStartingOffsets(
-                        OffsetsSelector.timestamp(startupOptions.startupTimestampMillis));
+                        OffsetsInitializer.timestamp(startupOptions.startupTimestampMillis));
                 break;
         }
 
@@ -227,14 +227,14 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
                 rocketMQSourceBuilder.setUnbounded(new OffsetsSelectorNoStopping());
                 break;
             case LATEST:
-                rocketMQSourceBuilder.setBounded(OffsetsSelector.latest());
+                rocketMQSourceBuilder.setBounded(OffsetsInitializer.latest());
                 break;
             case GROUP_OFFSETS:
-                rocketMQSourceBuilder.setBounded(OffsetsSelector.committed());
+                rocketMQSourceBuilder.setBounded(OffsetsInitializer.committed());
                 break;
             case TIMESTAMP:
                 rocketMQSourceBuilder.setBounded(
-                        OffsetsSelector.timestamp(boundedOptions.boundedTimestampMillis));
+                        OffsetsInitializer.timestamp(boundedOptions.boundedTimestampMillis));
                 break;
         }
 
