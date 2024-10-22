@@ -34,22 +34,22 @@ import java.util.Set;
 public class RocketMQPartitionSplit implements SourceSplit {
 
     public static final long NO_STOPPING_OFFSET = Long.MIN_VALUE;
-    // Indicating the split should consume from the latest.
-    public static final long LATEST_OFFSET = -1;
-    // Indicating the split should consume from the earliest.
-    public static final long EARLIEST_OFFSET = -2;
     // Indicating the split should consume from the last committed offset.
     public static final long COMMITTED_OFFSET = -3;
-
-    private final MessageQueue messageQueue;
-    private final long startingOffset;
-    private final long stoppingOffset;
+    // Indicating the split should consume from the earliest.
+    public static final long EARLIEST_OFFSET = -2;
+    // Indicating the split should consume from the latest.
+    public static final long LATEST_OFFSET = -1;
 
     // Valid special starting offsets
     public static final Set<Long> VALID_STARTING_OFFSET_MARKERS =
             new HashSet<>(Arrays.asList(EARLIEST_OFFSET, LATEST_OFFSET, COMMITTED_OFFSET));
     public static final Set<Long> VALID_STOPPING_OFFSET_MARKERS =
             new HashSet<>(Arrays.asList(LATEST_OFFSET, COMMITTED_OFFSET, NO_STOPPING_OFFSET));
+
+    private final MessageQueue messageQueue;
+    private final long startingOffset;
+    private final long stoppingOffset;
 
     public RocketMQPartitionSplit(MessageQueue messageQueue, long startingOffset) {
         this(messageQueue, startingOffset, NO_STOPPING_OFFSET);
@@ -61,18 +61,6 @@ public class RocketMQPartitionSplit implements SourceSplit {
         this.messageQueue = messageQueue;
         this.startingOffset = startingOffset;
         this.stoppingOffset = stoppingOffset;
-    }
-
-    private void verifyInitialOffset(
-            MessageQueue messageQueue, long startingOffset, long stoppingOffset) {}
-
-    public RocketMQPartitionSplit(
-            String topic,
-            String brokerName,
-            int queueId,
-            long startingOffset,
-            long stoppingOffset) {
-        this(new MessageQueue(topic, brokerName, queueId), startingOffset, stoppingOffset);
     }
 
     public String getTopic() {
@@ -87,6 +75,10 @@ public class RocketMQPartitionSplit implements SourceSplit {
         return messageQueue.getQueueId();
     }
 
+    public MessageQueue getMessageQueue() {
+        return messageQueue;
+    }
+
     public long getStartingOffset() {
         return startingOffset;
     }
@@ -97,10 +89,6 @@ public class RocketMQPartitionSplit implements SourceSplit {
                         || stoppingOffset == COMMITTED_OFFSET
                 ? Optional.of(stoppingOffset)
                 : Optional.empty();
-    }
-
-    public MessageQueue getMessageQueue() {
-        return messageQueue;
     }
 
     @Override
