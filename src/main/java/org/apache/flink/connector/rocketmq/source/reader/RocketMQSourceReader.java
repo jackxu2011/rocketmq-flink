@@ -29,7 +29,6 @@ import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.metrics.RocketMQSourceReaderMetrics;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplitState;
-import org.apache.flink.connector.rocketmq.source.util.UtilAll;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.slf4j.Logger;
@@ -102,7 +101,7 @@ public class RocketMQSourceReader<T>
                 // If the checkpoint is triggered before the queue min offsets
                 // is retrieved, do not commit the offsets for those partitions.
                 if (split.getStartingOffset() >= 0) {
-                    offsetsMap.put(UtilAll.getMessageQueue(split), split.getStartingOffset());
+                    offsetsMap.put(split.getMessageQueue(), split.getStartingOffset());
                 }
             }
             // Put offsets of all the finished splits.
@@ -126,7 +125,28 @@ public class RocketMQSourceReader<T>
             return;
         }
 
+        if (committedPartitions.isEmpty()) {
+            LOG.debug("There are no offsets to commit for checkpoint {}.", checkpointId);
+            removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
+            return;
+        }
+
         ((RocketMQSourceFetcherManager) splitFetcherManager).commitOffsets(committedPartitions);
+        LOG.debug("Successfully committed offsets for checkpoint {}", checkpointId);
+        rocketmqSourceReaderMetrics.recordSucceededCommit();
+        // If the finished MessageQueue has been committed, we remove it
+        // from the offsets of the finished splits map.
+        committedPartitions.forEach(rocketmqSourceReaderMetrics::recordCommittedOffset);
+        offsetsOfFinishedSplits
+                .entrySet()
+                .removeIf(entry -> committedPartitions.containsKey(entry.getKey()));
+        removeAllOffsetsToCommitUpToCheckpoint(checkpointId);
+    }
+
+    private void removeAllOffsetsToCommitUpToCheckpoint(long checkpointId) {
+        while (!offsetsToCommit.isEmpty() && offsetsToCommit.firstKey() <= checkpointId) {
+            offsetsToCommit.remove(offsetsToCommit.firstKey());
+        }
     }
 
     @Override
