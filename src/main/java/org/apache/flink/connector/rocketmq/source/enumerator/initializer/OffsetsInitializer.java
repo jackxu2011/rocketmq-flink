@@ -16,10 +16,10 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.rocketmq.source.enumerator.offset;
+package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 
 import org.apache.flink.annotation.PublicEvolving;
-import org.apache.flink.connector.rocketmq.legacy.common.config.OffsetResetStrategy;
+import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 import org.apache.flink.connector.rocketmq.source.RocketMQSource;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
@@ -36,95 +36,6 @@ import java.util.Map;
  */
 @PublicEvolving
 public interface OffsetsInitializer extends Serializable {
-
-    /**
-     * Get an {@link OffsetsInitializer} which initializes the offsets to the committed offsets. An
-     * exception will be thrown at runtime if there is no committed offsets.
-     *
-     * @return an offset initializer which initialize the offsets to the committed offsets.
-     */
-    static OffsetsInitializer committed() {
-        return committed(OffsetResetStrategy.LATEST);
-    }
-
-    /**
-     * Get an {@link OffsetsInitializer} which initializes the offsets to the committed offsets. Use
-     * the given {@link OffsetResetStrategy} to initialize the offsets if the committed offsets does
-     * not exist.
-     *
-     * @param offsetResetStrategy the offset reset strategy to use when the committed offsets do not
-     *     exist.
-     * @return an {@link OffsetsInitializer} which initializes the offsets to the committed offsets.
-     */
-    static OffsetsInitializer committed(OffsetResetStrategy offsetResetStrategy) {
-        // Because ConsumeFromWhere does have CONSUME_FROM_COMMITTED option, use
-        // CONSUME_FROM_TIMESTAMP as sentinel
-        return new OffsetsInitializerByStrategy(
-                ConsumeFromWhere.CONSUME_FROM_TIMESTAMP, offsetResetStrategy);
-    }
-
-    /**
-     * Get an {@link OffsetsInitializer} which initializes the offsets in each partition so that the
-     * initialized offset is the offset of the first record whose record timestamp is greater than
-     * or equals the give timestamp (milliseconds).
-     *
-     * @param timestamp the timestamp (milliseconds) to start the consumption.
-     * @return an {@link OffsetsInitializer} which initializes the offsets based on the given
-     *     timestamp.
-     */
-    static OffsetsInitializer timestamp(long timestamp) {
-        return new OffsetsSelectorByTimestamp(timestamp);
-    }
-
-    // --------------- factory methods ---------------
-
-    /**
-     * Get an {@link OffsetsInitializer} which initializes the offsets to the earliest available
-     * offsets of each partition.
-     *
-     * @return an {@link OffsetsInitializer} which initializes the offsets to the earliest available
-     *     offsets.
-     */
-    static OffsetsInitializer earliest() {
-        return new OffsetsInitializerByStrategy(
-                ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET, OffsetResetStrategy.EARLIEST);
-    }
-
-    /**
-     * Get an {@link OffsetsInitializer} which initializes the offsets to the latest available
-     * offsets of each partition.
-     *
-     * @return an offset initializer which initialize the offsets to the latest available offsets.
-     */
-    static OffsetsInitializer latest() {
-        return new OffsetsInitializerByStrategy(
-                ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET, OffsetResetStrategy.LATEST);
-    }
-
-    /**
-     * Get an {@link OffsetsInitializer} which initializes the offsets to the specified offsets.
-     *
-     * @param offsets the specified offsets for each partition.
-     * @return an {@link OffsetsInitializer} which initializes the offsets to the specified offsets.
-     */
-    static OffsetsInitializer offsets(Map<MessageQueue, Long> offsets) {
-        return new OffsetsInitializerBySpecified(offsets, OffsetResetStrategy.EARLIEST);
-    }
-
-    /**
-     * Get an {@link OffsetsInitializer} which initializes the offsets to the specified offsets. Use
-     * the given {@link OffsetResetStrategy} to initialize the offsets in case the specified offset
-     * is out of range.
-     *
-     * @param offsets the specified offsets for each partition.
-     * @param offsetResetStrategy the {@link OffsetResetStrategy} to use when the specified offset
-     *     is out of range.
-     * @return an {@link OffsetsInitializer} which initializes the offsets to the specified offsets.
-     */
-    static OffsetsInitializer offsets(
-            Map<MessageQueue, Long> offsets, OffsetResetStrategy offsetResetStrategy) {
-        return new OffsetsInitializerBySpecified(offsets, offsetResetStrategy);
-    }
 
     /**
      * This method retrieves the current offsets for a collection of {@link MessageQueue}s using a
@@ -165,5 +76,94 @@ public interface OffsetsInitializer extends Serializable {
 
         /** List offsets for the specified timestamp. */
         Map<MessageQueue, Long> offsetsForTimes(Map<MessageQueue, Long> messageQueueWithTimeMap);
+    }
+
+    // --------------- factory methods ---------------
+
+    /**
+     * Get an {@link OffsetsInitializer} which initializes the offsets to the committed offsets. An
+     * exception will be thrown at runtime if there is no committed offsets.
+     *
+     * @return an offset initializer which initialize the offsets to the committed offsets.
+     */
+    static OffsetsInitializer commited() {
+        return commited(OffsetResetStrategy.LATEST);
+    }
+
+    /**
+     * Get an {@link OffsetsInitializer} which initializes the offsets to the committed offsets. Use
+     * the given {@link OffsetResetStrategy} to initialize the offsets if the committed offsets does
+     * not exist.
+     *
+     * @param offsetResetStrategy the offset reset strategy to use when the committed offsets do not
+     *     exist.
+     * @return an {@link OffsetsInitializer} which initializes the offsets to the committed offsets.
+     */
+    static OffsetsInitializer commited(OffsetResetStrategy offsetResetStrategy) {
+        // Because ConsumeFromWhere does have CONSUME_FROM_COMMITTED option, use
+        // CONSUME_FROM_TIMESTAMP as sentinel
+        return new StrategyOffsetsInitializer(
+                ConsumeFromWhere.CONSUME_FROM_TIMESTAMP, offsetResetStrategy);
+    }
+
+    /**
+     * Get an {@link OffsetsInitializer} which initializes the offsets in each partition so that the
+     * initialized offset is the offset of the first record whose record timestamp is greater than
+     * or equals the give timestamp (milliseconds).
+     *
+     * @param timestamp the timestamp (milliseconds) to start the consumption.
+     * @return an {@link OffsetsInitializer} which initializes the offsets based on the given
+     *     timestamp.
+     */
+    static OffsetsInitializer timestamp(long timestamp) {
+        return new TimestampOffsetsInitializer(timestamp);
+    }
+
+    /**
+     * Get an {@link OffsetsInitializer} which initializes the offsets to the earliest available
+     * offsets of each partition.
+     *
+     * @return an {@link OffsetsInitializer} which initializes the offsets to the earliest available
+     *     offsets.
+     */
+    static OffsetsInitializer earliest() {
+        return new StrategyOffsetsInitializer(
+                ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET, OffsetResetStrategy.EARLIEST);
+    }
+
+    /**
+     * Get an {@link OffsetsInitializer} which initializes the offsets to the latest available
+     * offsets of each partition.
+     *
+     * @return an offset initializer which initialize the offsets to the latest available offsets.
+     */
+    static OffsetsInitializer latest() {
+        return new StrategyOffsetsInitializer(
+                ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET, OffsetResetStrategy.LATEST);
+    }
+
+    /**
+     * Get an {@link OffsetsInitializer} which initializes the offsets to the specified offsets.
+     *
+     * @param offsets the specified offsets for each partition.
+     * @return an {@link OffsetsInitializer} which initializes the offsets to the specified offsets.
+     */
+    static OffsetsInitializer offsets(Map<MessageQueue, Long> offsets) {
+        return new SpecifiedOffsetsInitializer(offsets, OffsetResetStrategy.EARLIEST);
+    }
+
+    /**
+     * Get an {@link OffsetsInitializer} which initializes the offsets to the specified offsets. Use
+     * the given {@link OffsetResetStrategy} to initialize the offsets in case the specified offset
+     * is out of range.
+     *
+     * @param offsets the specified offsets for each partition.
+     * @param offsetResetStrategy the {@link OffsetResetStrategy} to use when the specified offset
+     *     is out of range.
+     * @return an {@link OffsetsInitializer} which initializes the offsets to the specified offsets.
+     */
+    static OffsetsInitializer offsets(
+            Map<MessageQueue, Long> offsets, OffsetResetStrategy offsetResetStrategy) {
+        return new SpecifiedOffsetsInitializer(offsets, offsetResetStrategy);
     }
 }

@@ -19,7 +19,6 @@
 package org.apache.flink.connector.rocketmq.source.reader;
 
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
@@ -49,11 +48,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
-
-import static org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit.NO_STOPPING_OFFSET;
 
 /**
  * A {@link SplitReader} implementation that reads records from RocketMQ partitions.
@@ -72,7 +67,6 @@ public class RocketMQPartitionSplitReader<T>
     private final Configuration configuration;
 
     private final RocketMQSourceReaderMetrics rocketmqSourceReaderMetrics;
-    private volatile boolean wakeup = false;
 
     // Tracking empty splits that has not been added to finished splits in fetch()
     private final Set<String> emptySplits = new HashSet<>();
@@ -90,7 +84,6 @@ public class RocketMQPartitionSplitReader<T>
 
     @Override
     public RecordsWithSplitIds<MessageView> fetch() {
-        wakeup = false;
         ConsumerRecords records;
         try {
             records = consumer.poll(POLL_TIMEOUT);
@@ -151,7 +144,7 @@ public class RocketMQPartitionSplitReader<T>
         }
 
         // Assignment.
-        ConcurrentMap<MessageQueue, Tuple2<Long, Long>> newOffsetTable = new ConcurrentHashMap<>();
+        Collection<MessageQueue> newAssignment = new HashSet<>();
 
         // Set up the stopping timestamps.
         splitsChange
@@ -159,45 +152,38 @@ public class RocketMQPartitionSplitReader<T>
                 .forEach(
                         split -> {
                             MessageQueue messageQueue = split.getMessageQueue();
-                            newOffsetTable.put(
-                                    messageQueue,
-                                    new Tuple2<>(
-                                            split.getStartingOffset(),
-                                            split.getStoppingOffset().orElse(NO_STOPPING_OFFSET)));
+                            newAssignment.add(messageQueue);
                             rocketmqSourceReaderMetrics.registerMessageQueue(messageQueue);
                         });
 
-        // todo: log message queue change
-
         // It will replace the previous assignment
-        Set<MessageQueue> incrementalSplits = newOffsetTable.keySet();
-        consumer.assign(incrementalSplits);
+        consumer.assign(newAssignment);
 
         // set offset to consumer
-        for (Map.Entry<MessageQueue, Tuple2<Long, Long>> entry : newOffsetTable.entrySet()) {
-            MessageQueue messageQueue = entry.getKey();
-            Long startingOffset = entry.getValue().f0;
-            try {
-                consumer.seek(messageQueue, startingOffset);
-            } catch (Exception e) {
-                String info =
-                        String.format(
-                                "messageQueue:%s, seek to starting offset:%s",
-                                messageQueue, startingOffset);
-                throw new FlinkRuntimeException(info, e);
-            }
-            if (entry.getValue().f1 != NO_STOPPING_OFFSET) {
-                stoppingOffsets.put(messageQueue, entry.getValue().f1);
-            }
-        }
-
+        splitsChange
+                .splits()
+                .forEach(
+                        split -> {
+                            MessageQueue messageQueue = split.getMessageQueue();
+                            long startingOffset = split.getStartingOffset();
+                            try {
+                                consumer.seek(messageQueue, startingOffset);
+                            } catch (Exception e) {
+                                String info =
+                                        String.format(
+                                                "messageQueue:%s, seek to starting offset:%s",
+                                                messageQueue, startingOffset);
+                                throw new FlinkRuntimeException(info, e);
+                            }
+                            split.getStoppingOffset()
+                                    .ifPresent(offset -> stoppingOffsets.put(messageQueue, offset));
+                        });
         removeEmptySplits();
     }
 
     @Override
     public void wakeUp() {
         LOG.debug("Wake up the split reader in case the fetcher thread is blocking in fetch().");
-        wakeup = true;
     }
 
     @Override

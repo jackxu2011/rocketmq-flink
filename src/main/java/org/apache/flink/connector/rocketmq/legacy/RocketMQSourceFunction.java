@@ -25,7 +25,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.connector.rocketmq.legacy.common.config.OffsetResetStrategy;
+import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 import org.apache.flink.connector.rocketmq.legacy.common.config.StartupMode;
 import org.apache.flink.connector.rocketmq.legacy.common.serialization.KeyValueDeserializationSchema;
 import org.apache.flink.connector.rocketmq.legacy.common.util.MetricUtils;

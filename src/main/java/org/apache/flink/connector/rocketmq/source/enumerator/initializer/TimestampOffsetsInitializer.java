@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.rocketmq.source.enumerator.offset;
+package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 
-import org.apache.flink.connector.rocketmq.legacy.common.config.OffsetResetStrategy;
+import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 
@@ -25,11 +25,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-class OffsetsSelectorByTimestamp implements OffsetsInitializer {
+class TimestampOffsetsInitializer implements OffsetsInitializer {
     private static final long serialVersionUID = 2932230571773627233L;
     private final long startingTimestamp;
 
-    OffsetsSelectorByTimestamp(long startingTimestamp) {
+    TimestampOffsetsInitializer(long startingTimestamp) {
         this.startingTimestamp = startingTimestamp;
     }
 

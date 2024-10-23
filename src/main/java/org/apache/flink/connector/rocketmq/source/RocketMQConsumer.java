@@ -20,7 +20,7 @@ package org.apache.flink.connector.rocketmq.source;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsInitializer;
+import org.apache.flink.connector.rocketmq.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.reader.ConsumerRecords;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.MessageViewExt;

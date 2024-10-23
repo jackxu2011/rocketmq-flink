@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.rocketmq.legacy.common.config;
+package org.apache.flink.connector.rocketmq.common.config;
+
+import org.apache.flink.connector.rocketmq.legacy.common.config.StartupMode;
 
 /** Config for #{@link StartupMode#GROUP_OFFSETS}. */
 public enum OffsetResetStrategy {
@@ -23,5 +25,6 @@ public enum OffsetResetStrategy {
     LATEST,
 
     /** If group offsets is not found,the earliest offset would be set to start consumer */
-    EARLIEST
+    EARLIEST,
+    NONE
 }

@@ -28,6 +28,7 @@ import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 
 import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.message.MessageQueue;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -60,7 +61,8 @@ public class RocketMQRecordEmitterTest {
         MessageView messageView = new MessageViewExt(message);
         RocketMQPartitionSplitState partitionSplitState =
                 new RocketMQPartitionSplitState(
-                        new RocketMQPartitionSplit(topic, broker, partition, startingOffset, -1L));
+                        new RocketMQPartitionSplit(
+                                new MessageQueue(topic, broker, partition), startingOffset, -1L));
 
         recordEmitter.emitRecord(messageView, new TestingEmitterOutput<>(), partitionSplitState);
     }

@@ -20,6 +20,7 @@ package org.apache.flink.connector.rocketmq.source;
 
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
+import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigValidator;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
 
@@ -48,6 +49,11 @@ public class RocketMQSourceOptions {
                     .defaultValue(5 * 1000L)
                     .withDescription(
                             "Applies to Consumer, the interval for persisting consumption progress");
+    public static final ConfigOption<OffsetResetStrategy> AUTO_OFFSET_RESET_STRATEGY =
+            ConfigOptions.key("offset.reset.strategy")
+                    .enumType(OffsetResetStrategy.class)
+                    .noDefaultValue()
+                    .withDescription("The strategy for offset reset");
 
     public static final ConfigOption<Long> PARTITION_DISCOVERY_INTERVAL_MS =
             ConfigOptions.key("partition.discovery.interval.ms")

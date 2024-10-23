@@ -15,25 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.rocketmq.source.enumerator.offset;
+package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 
-import org.apache.flink.connector.rocketmq.legacy.common.config.OffsetResetStrategy;
+import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageQueue;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Properties;
 
-public class OffsetsInitializerByStrategy implements OffsetsInitializer, OffsetsValidator {
+public class StrategyOffsetsInitializer implements OffsetsInitializer {
 
-    private final ConsumeFromWhere consumeFromWhere;
+    private final ConsumeFromWhere fromWhere;
     private final OffsetResetStrategy offsetResetStrategy;
 
-    OffsetsInitializerByStrategy(
-            ConsumeFromWhere consumeFromWhere, OffsetResetStrategy offsetResetStrategy) {
-        this.consumeFromWhere = consumeFromWhere;
+    StrategyOffsetsInitializer(
+            ConsumeFromWhere fromWhere, OffsetResetStrategy offsetResetStrategy) {
+        this.fromWhere = fromWhere;
         this.offsetResetStrategy = offsetResetStrategy;
     }
 
@@ -41,21 +40,25 @@ public class OffsetsInitializerByStrategy implements OffsetsInitializer, Offsets
     public Map<MessageQueue, Long> getMessageQueueOffsets(
             Collection<MessageQueue> messageQueues, MessageQueueOffsetsRetriever offsetsRetriever) {
 
-        switch (consumeFromWhere) {
-            case CONSUME_FROM_FIRST_OFFSET:
-                return offsetsRetriever.beginOffsets(messageQueues);
+        Map<MessageQueue, Long> initialOffsets;
+        switch (fromWhere) {
             case CONSUME_FROM_LAST_OFFSET:
-                return offsetsRetriever.endOffsets(messageQueues);
+                initialOffsets = offsetsRetriever.endOffsets(messageQueues);
+                break;
+            case CONSUME_FROM_FIRST_OFFSET:
+                initialOffsets = offsetsRetriever.beginOffsets(messageQueues);
+                break;
+            case CONSUME_FROM_TIMESTAMP:
+                initialOffsets = offsetsRetriever.committed(messageQueues);
+                break;
             default:
-                return offsetsRetriever.committed(messageQueues);
+                throw new IllegalStateException("Unknown consume from where: " + fromWhere);
         }
+        return initialOffsets;
     }
 
     @Override
     public OffsetResetStrategy getAutoOffsetResetStrategy() {
         return offsetResetStrategy;
     }
-
-    @Override
-    public void validate(Properties rocketmqSourceProperties) throws IllegalStateException {}
 }

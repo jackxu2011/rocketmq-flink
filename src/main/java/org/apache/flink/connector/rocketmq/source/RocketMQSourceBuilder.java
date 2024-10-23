@@ -23,8 +23,8 @@ import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigBuilder;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsInitializer;
-import org.apache.flink.connector.rocketmq.source.enumerator.offset.OffsetsSelectorNoStopping;
+import org.apache.flink.connector.rocketmq.source.enumerator.initializer.NoStoppingOffsetsInitializer;
+import org.apache.flink.connector.rocketmq.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 
@@ -57,8 +57,8 @@ public class RocketMQSourceBuilder<OUT> {
 
     public RocketMQSourceBuilder() {
         this.configBuilder = new RocketMQConfigBuilder();
-        this.setStartingOffsets(OffsetsInitializer.committed());
-        this.setUnbounded(new OffsetsSelectorNoStopping());
+        this.setStartingOffsets(OffsetsInitializer.commited());
+        this.setUnbounded(new NoStoppingOffsetsInitializer());
     }
 
     /**

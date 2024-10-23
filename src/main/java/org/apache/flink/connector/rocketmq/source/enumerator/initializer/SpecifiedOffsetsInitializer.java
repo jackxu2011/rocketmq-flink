@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.rocketmq.source.enumerator.offset;
+package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 
-import org.apache.flink.connector.rocketmq.legacy.common.config.OffsetResetStrategy;
+import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 
@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class OffsetsInitializerBySpecified implements OffsetsInitializer, OffsetsValidator {
+public class SpecifiedOffsetsInitializer implements OffsetsInitializer, OffsetsValidator {
 
     private final Map<MessageQueue, Long> initialOffsets;
     private final OffsetResetStrategy offsetResetStrategy;
 
-    OffsetsInitializerBySpecified(
+    SpecifiedOffsetsInitializer(
             Map<MessageQueue, Long> initialOffsets, OffsetResetStrategy offsetResetStrategy) {
         this.initialOffsets = Collections.unmodifiableMap(initialOffsets);
         this.offsetResetStrategy = offsetResetStrategy;

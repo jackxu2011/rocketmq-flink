@@ -1,4 +1,4 @@
-package org.apache.flink.connector.rocketmq.source.enumerator.offset;
+package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 
 import org.apache.flink.annotation.Internal;
 

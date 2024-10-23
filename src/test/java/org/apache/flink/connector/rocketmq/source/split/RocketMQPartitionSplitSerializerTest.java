@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.rocketmq.source.split;
 
+import org.apache.rocketmq.common.message.MessageQueue;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -32,7 +33,7 @@ public class RocketMQPartitionSplitSerializerTest {
         RocketMQPartitionSplitSerializer serializer = new RocketMQPartitionSplitSerializer();
         RocketMQPartitionSplit expected =
                 new RocketMQPartitionSplit(
-                        "test-split-serialization", "taobaodaily", 256, 100, 300);
+                        new MessageQueue("test-split-serialization", "taobaodaily", 256), 100, 300);
         RocketMQPartitionSplit actual =
                 serializer.deserialize(serializer.getVersion(), serializer.serialize(expected));
         assertEquals(expected, actual);

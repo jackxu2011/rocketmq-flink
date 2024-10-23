@@ -2,6 +2,7 @@ package org.apache.flink.connector.rocketmq.source.enumerator.allocate;
 
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
+import org.apache.rocketmq.common.message.MessageQueue;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -26,7 +27,9 @@ public class BroadcastAllocateStrategyTest {
         for (int i = 0; i < NUM_SPLITS; i++) {
             mqAll.add(
                     new RocketMQPartitionSplit(
-                            PREFIX_TOPIC + (i + 1), BROKER_NAME, i, 0, SPLIT_SIZE[i]));
+                            new MessageQueue(PREFIX_TOPIC + (i + 1), BROKER_NAME, i),
+                            0,
+                            SPLIT_SIZE[i]));
         }
         int parallelism = 3;
         Map<Integer, Set<RocketMQPartitionSplit>> result =
@@ -40,7 +43,9 @@ public class BroadcastAllocateStrategyTest {
                 assertTrue(
                         splits.contains(
                                 new RocketMQPartitionSplit(
-                                        PREFIX_TOPIC + (i + 1), BROKER_NAME, i, 0, SPLIT_SIZE[i])));
+                                        new MessageQueue(PREFIX_TOPIC + (i + 1), BROKER_NAME, i),
+                                        0,
+                                        SPLIT_SIZE[i])));
             }
         }
     }

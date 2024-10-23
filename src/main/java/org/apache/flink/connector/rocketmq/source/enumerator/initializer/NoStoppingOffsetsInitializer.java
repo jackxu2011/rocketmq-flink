@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.rocketmq.source.enumerator.offset;
+package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.connector.rocketmq.legacy.common.config.OffsetResetStrategy;
+import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 
@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @Internal
-public class OffsetsSelectorNoStopping implements OffsetsInitializer {
+public class NoStoppingOffsetsInitializer implements OffsetsInitializer {
 
     @Override
     public Map<MessageQueue, Long> getMessageQueueOffsets(
