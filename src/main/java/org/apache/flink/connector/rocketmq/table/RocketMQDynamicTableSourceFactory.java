@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.ENDPOINTS;
-import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.FILTER_SQL;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.FILTER_TAG;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.GROUP;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.KEY_FIELDS;
@@ -100,7 +99,6 @@ public class RocketMQDynamicTableSourceFactory implements DynamicTableSourceFact
         optionalOptions.add(VALUE_FIELDS_INCLUDE);
         optionalOptions.add(GROUP);
         optionalOptions.add(FILTER_TAG);
-        optionalOptions.add(FILTER_SQL);
         optionalOptions.add(SCAN_STARTUP_MODE);
         optionalOptions.add(SCAN_STARTUP_TIMESTAMP_MILLIS);
         optionalOptions.add(SCAN_BOUNDED_MODE);

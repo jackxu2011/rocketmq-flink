@@ -46,8 +46,8 @@ public class RocketMQSourceBuilder<OUT> {
     protected final RocketMQConfigBuilder configBuilder;
 
     // Users can specify the starting / stopping offset initializer.
-    private OffsetsInitializer startingOffsetSelector;
-    private OffsetsInitializer stoppingOffsetsSelector;
+    private OffsetsInitializer startingOffsetsInitializer;
+    private OffsetsInitializer stoppingOffsetsInitializer;
 
     // Boundedness
     private Boundedness boundedness;
@@ -107,19 +107,19 @@ public class RocketMQSourceBuilder<OUT> {
     }
 
     public RocketMQSourceBuilder<OUT> setStartingOffsets(OffsetsInitializer offsetsInitializer) {
-        this.startingOffsetSelector = offsetsInitializer;
+        this.startingOffsetsInitializer = offsetsInitializer;
         return this;
     }
 
-    public RocketMQSourceBuilder<OUT> setUnbounded(OffsetsInitializer stoppingOffsetsSelector) {
+    public RocketMQSourceBuilder<OUT> setUnbounded(OffsetsInitializer stoppingOffsetsInitializer) {
         this.boundedness = Boundedness.CONTINUOUS_UNBOUNDED;
-        this.stoppingOffsetsSelector = stoppingOffsetsSelector;
+        this.stoppingOffsetsInitializer = stoppingOffsetsInitializer;
         return this;
     }
 
-    public RocketMQSourceBuilder<OUT> setBounded(OffsetsInitializer stoppingOffsetsSelector) {
+    public RocketMQSourceBuilder<OUT> setBounded(OffsetsInitializer stoppingOffsetsInitializer) {
         this.boundedness = Boundedness.BOUNDED;
-        this.stoppingOffsetsSelector = stoppingOffsetsSelector;
+        this.stoppingOffsetsInitializer = stoppingOffsetsInitializer;
         return this;
     }
 
@@ -185,8 +185,8 @@ public class RocketMQSourceBuilder<OUT> {
         Configuration configuration = configBuilder.build(SOURCE_CONFIG_VALIDATOR);
 
         return new RocketMQSource<>(
-                startingOffsetSelector,
-                stoppingOffsetsSelector,
+                startingOffsetsInitializer,
+                stoppingOffsetsInitializer,
                 boundedness,
                 deserializationSchema,
                 configuration);

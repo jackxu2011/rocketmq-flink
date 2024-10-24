@@ -25,6 +25,7 @@ import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.DescribedEnum;
 import org.apache.flink.configuration.description.Description;
 import org.apache.flink.configuration.description.InlineElement;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.table.factories.FactoryUtil;
 
 import java.util.List;
@@ -109,47 +110,23 @@ public class RocketMQConnectorOptions {
     // --------------------------------------------------------------------------------------------
     // RocketMQ specific options
     // --------------------------------------------------------------------------------------------
-    public static final ConfigOption<List<String>> TOPIC =
-            ConfigOptions.key("topic")
-                    .stringType()
-                    .asList()
-                    .noDefaultValue()
-                    .withDescription(
-                            "Topic name(s) to read data from when the table is used as source. It also supports topic list for source by separating topic by semicolon like 'topic-1;topic-2'. "
-                                    + "When the table is used as sink, the topic name is the topic to write data. It not supports topic list for sinks. ");
+    public static final ConfigOption<List<String>> TOPIC = RocketMQOptions.TOPIC;
 
-    public static final ConfigOption<String> GROUP =
-            ConfigOptions.key("group")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription(
-                            "A consumer group is a load balancing group that contains consumers that use the same consumption behaviors."
-                                    + "also support producer group which is discontinued.");
+    public static final ConfigOption<String> GROUP = RocketMQOptions.GROUP;
 
     /**
      * rocketmq v4 endpoints means nameserver address rocketmq v5 endpoints means proxy server
      * address
      */
-    public static final ConfigOption<String> ENDPOINTS =
-            ConfigOptions.key("endpoints")
-                    .stringType()
-                    .noDefaultValue()
-                    .withDescription("RocketMQ server address");
+    public static final ConfigOption<String> ENDPOINTS = RocketMQOptions.ENDPOINTS;
 
     public static final ConfigOption<Boolean> GLOBAL_DEBUG_MODE =
             ConfigOptions.key(CLIENT_CONFIG_PREFIX + "debug").booleanType().defaultValue(false);
 
     public static final ConfigOption<String> FILTER_TAG =
-            ConfigOptions.key(CLIENT_CONFIG_PREFIX + "filter.tag")
+            ConfigOptions.key(CLIENT_CONFIG_PREFIX + RocketMQOptions.FILTER_TAG.key())
                     .stringType()
                     .defaultValue("*")
-                    .withDescription(
-                            "for message filter, rocketmq only support single filter option");
-
-    public static final ConfigOption<String> FILTER_SQL =
-            ConfigOptions.key(CLIENT_CONFIG_PREFIX + "filter.sql")
-                    .stringType()
-                    .noDefaultValue()
                     .withDescription(
                             "for message filter, rocketmq only support single filter option");
 

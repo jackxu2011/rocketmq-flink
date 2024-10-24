@@ -55,12 +55,12 @@ public class RocketMQOptions {
                             "A consumer group is a load balancing group that contains consumers that use the same consumption behaviors."
                                     + "also support producer group which is discontinued.");
 
-    public static final ConfigOption<String> SCAN_FILTER_TAG =
+    public static final ConfigOption<String> FILTER_TAG =
             ConfigOptions.key("filter.tag")
                     .stringType()
                     .defaultValue("*")
                     .withDescription(
-                            "for message filter, rocketmq only support single filter option");
+                            "for message filter, rocketmq assign mode only support tag filter option");
 
     /**
      * rocketmq v4 endpoints means nameserver address rocketmq v5 endpoints means proxy server
@@ -136,17 +136,4 @@ public class RocketMQOptions {
 
     public static final ConfigOption<String> TIME_ZONE =
             ConfigOptions.key("timeZone").stringType().noDefaultValue();
-
-    // for message payload
-    public static final ConfigOption<String> ENCODING =
-            ConfigOptions.key("message.encoding").stringType().defaultValue("UTF-8");
-
-    public static final ConfigOption<String> FIELD_DELIMITER =
-            ConfigOptions.key("message.field.delimiter").stringType().defaultValue("\u0001");
-
-    public static final ConfigOption<String> LINE_DELIMITER =
-            ConfigOptions.key("message.line.delimiter").stringType().defaultValue("\n");
-
-    public static final ConfigOption<String> LENGTH_CHECK =
-            ConfigOptions.key("message.length.check").stringType().defaultValue("NONE");
 }

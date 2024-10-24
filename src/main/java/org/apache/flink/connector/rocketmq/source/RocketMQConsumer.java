@@ -17,10 +17,8 @@
 
 package org.apache.flink.connector.rocketmq.source;
 
-import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
-import org.apache.flink.connector.rocketmq.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.reader.ConsumerRecords;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.MessageViewExt;
@@ -100,7 +98,6 @@ public class RocketMQConsumer implements InnerConsumer {
                         ManagementFactory.getRuntimeMXBean().getName(),
                         groupId,
                         UUID.randomUUID().toString()));
-
         this.adminExt.setNamesrvAddr(endPoints);
         this.adminExt.setAdminExtGroup(groupId);
         this.adminExt.setVipChannelEnabled(false);
@@ -110,6 +107,13 @@ public class RocketMQConsumer implements InnerConsumer {
                         ManagementFactory.getRuntimeMXBean().getName(),
                         groupId,
                         UUID.randomUUID().toString()));
+        List<String> topics =
+                configuration.getOptional(RocketMQOptions.TOPIC).orElseGet(Collections::emptyList);
+        if (topics.isEmpty()) {
+            throw new IllegalArgumentException("No topic is configured for RocketMQ source.");
+        }
+        String tag = configuration.get(RocketMQOptions.FILTER_TAG);
+        topics.forEach(topic -> this.consumer.setSubExpressionForAssign(topic, tag));
     }
 
     @Override
@@ -418,43 +422,5 @@ public class RocketMQConsumer implements InnerConsumer {
                                 .toArray(CompletableFuture[]::new))
                 .join();
         return result;
-    }
-
-    /** The implementation for offsets retriever with a consumer and an admin client. */
-    @VisibleForTesting
-    public static class RemotingOffsetsRetrieverImpl
-            implements OffsetsInitializer.MessageQueueOffsetsRetriever, AutoCloseable {
-
-        private final InnerConsumer consumer;
-
-        public RemotingOffsetsRetrieverImpl(InnerConsumer consumer) {
-            this.consumer = consumer;
-        }
-
-        @Override
-        public void close() throws Exception {
-            this.consumer.close();
-        }
-
-        @Override
-        public Map<MessageQueue, Long> committed(Collection<MessageQueue> partitions) {
-            return consumer.committed(partitions);
-        }
-
-        @Override
-        public Map<MessageQueue, Long> beginOffsets(Collection<MessageQueue> messageQueues) {
-            return consumer.beginOffsets(messageQueues);
-        }
-
-        @Override
-        public Map<MessageQueue, Long> endOffsets(Collection<MessageQueue> messageQueues) {
-            return consumer.endOffsets(messageQueues);
-        }
-
-        @Override
-        public Map<MessageQueue, Long> offsetsForTimes(
-                Map<MessageQueue, Long> messageQueueWithTimeMap) {
-            return consumer.offsetsForTimes(messageQueueWithTimeMap);
-        }
     }
 }

@@ -26,6 +26,7 @@ import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.connector.source.SplitsAssignment;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.connector.rocketmq.source.InnerConsumer;
 import org.apache.flink.connector.rocketmq.source.RocketMQConsumer;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
@@ -209,7 +210,7 @@ public class RocketMQSourceEnumerator
         Set<String> topicSet =
                 Sets.newHashSet(
                         configuration
-                                .getOptional(RocketMQConnectorOptions.TOPIC)
+                                .getOptional(RocketMQOptions.TOPIC)
                                 .orElseGet(Collections::emptyList));
 
         return topicSet.stream()
@@ -238,7 +239,7 @@ public class RocketMQSourceEnumerator
         Set<MessageQueue> increaseSet = sourceChangeResult.getIncreaseSet();
 
         OffsetsInitializer.MessageQueueOffsetsRetriever offsetsRetriever =
-                new RocketMQConsumer.RemotingOffsetsRetrieverImpl(consumer);
+                new RemotingOffsetsRetriever(consumer);
 
         Map<MessageQueue, Long> startingOffsets =
                 startingOffsetsSelector.getMessageQueueOffsets(increaseSet, offsetsRetriever);
