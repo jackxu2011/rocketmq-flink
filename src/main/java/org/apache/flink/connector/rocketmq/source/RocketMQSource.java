@@ -168,7 +168,7 @@ public class RocketMQSource<OUT>
                 boundedness,
                 configuration,
                 enumContext,
-                checkpoint.getCurrentSplitAssignment());
+                checkpoint);
     }
 
     @Override

@@ -22,19 +22,75 @@ import org.apache.flink.annotation.Internal;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** The state of RocketMQ source enumerator. */
 @Internal
 public class RocketMQSourceEnumState {
 
-    private final Set<MessageQueue> currentSplitAssignment;
+    /** Partitions with status: ASSIGNED or UNASSIGNED_INITIAL. */
+    private final Set<MessageQueueWithAssignmentStatus> partitions;
 
-    public RocketMQSourceEnumState(Set<MessageQueue> currentSplitAssignment) {
-        this.currentSplitAssignment = currentSplitAssignment;
+    /**
+     * this flag will be marked as true if initial partitions are discovered after enumerator
+     * starts.
+     */
+    private final boolean initialDiscoveryFinished;
+
+    public RocketMQSourceEnumState(
+            Set<MessageQueueWithAssignmentStatus> partitions, boolean initialDiscoveryFinished) {
+        this.partitions = partitions;
+        this.initialDiscoveryFinished = initialDiscoveryFinished;
     }
 
-    public Set<MessageQueue> getCurrentSplitAssignment() {
-        return currentSplitAssignment;
+    public RocketMQSourceEnumState(
+            Set<MessageQueue> assignPartitions,
+            Set<MessageQueue> unassignedInitialPartitions,
+            boolean initialDiscoveryFinished) {
+        this.partitions = new HashSet<>();
+        partitions.addAll(
+                assignPartitions.stream()
+                        .map(
+                                topicPartition ->
+                                        new MessageQueueWithAssignmentStatus(
+                                                topicPartition, AssignmentStatus.ASSIGNED))
+                        .collect(Collectors.toSet()));
+        partitions.addAll(
+                unassignedInitialPartitions.stream()
+                        .map(
+                                topicPartition ->
+                                        new MessageQueueWithAssignmentStatus(
+                                                topicPartition,
+                                                AssignmentStatus.UNASSIGNED_INITIAL))
+                        .collect(Collectors.toSet()));
+        this.initialDiscoveryFinished = initialDiscoveryFinished;
+    }
+
+    public Set<MessageQueueWithAssignmentStatus> getPartitions() {
+        return partitions;
+    }
+
+    public Set<MessageQueue> assignedPartitions() {
+        return filterPartitionsByAssignmentStatus(AssignmentStatus.ASSIGNED);
+    }
+
+    public Set<MessageQueue> unassignedInitialPartitions() {
+        return filterPartitionsByAssignmentStatus(AssignmentStatus.UNASSIGNED_INITIAL);
+    }
+
+    public boolean initialDiscoveryFinished() {
+        return initialDiscoveryFinished;
+    }
+
+    private Set<MessageQueue> filterPartitionsByAssignmentStatus(
+            AssignmentStatus assignmentStatus) {
+        return partitions.stream()
+                .filter(
+                        partitionWithStatus ->
+                                partitionWithStatus.getAssignmentStatus().equals(assignmentStatus))
+                .map(MessageQueueWithAssignmentStatus::getMessageQueue)
+                .collect(Collectors.toSet());
     }
 }

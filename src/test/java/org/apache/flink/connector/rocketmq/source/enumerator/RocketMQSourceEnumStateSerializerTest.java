@@ -27,8 +27,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 
 /** Test for {@link RocketMQSourceEnumStateSerializer}. */
 public class RocketMQSourceEnumStateSerializerTest {
@@ -39,8 +39,7 @@ public class RocketMQSourceEnumStateSerializerTest {
         RocketMQSourceEnumState expected = prepareSourceEnumeratorState();
         assert expected != null;
         RocketMQSourceEnumState actual = serializer.deserialize(0, serializer.serialize(expected));
-        Assert.assertEquals(
-                expected.getCurrentSplitAssignment(), actual.getCurrentSplitAssignment());
+        Assert.assertEquals(expected.getPartitions(), actual.getPartitions());
     }
 
     private RocketMQSourceEnumState prepareSourceEnumeratorState() {
@@ -102,6 +101,6 @@ public class RocketMQSourceEnumStateSerializerTest {
                                         0,
                                         System.currentTimeMillis())));
 
-        return new RocketMQSourceEnumState(new HashSet<>());
+        return new RocketMQSourceEnumState(Collections.emptySet(), false);
     }
 }

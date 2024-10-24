@@ -37,7 +37,6 @@ import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.util.FlinkRuntimeException;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Sets;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.slf4j.Logger;
@@ -46,12 +45,14 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /** The enumerator class for RocketMQ source. */
@@ -59,67 +60,79 @@ import java.util.stream.Collectors;
 public class RocketMQSourceEnumerator
         implements SplitEnumerator<RocketMQPartitionSplit, RocketMQSourceEnumState> {
 
-    private static final Logger log = LoggerFactory.getLogger(RocketMQSourceEnumerator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RocketMQSourceEnumerator.class);
 
-    private final Configuration configuration;
-    private final SplitEnumeratorContext<RocketMQPartitionSplit> context;
-    private final Boundedness boundedness;
     // Users can specify the starting / stopping offset initializer.
     private final AllocateStrategy allocateStrategy;
-    private final OffsetsInitializer startingOffsetsSelector;
-    private final OffsetsInitializer stoppingOffsetsSelector;
-    // The internal states of the enumerator.
-    // This set is only accessed by the partition discovery callable in the callAsync() method.
-    // The current assignment by reader id. Only accessed by the coordinator thread.
-    // The discovered and initialized partition splits that are waiting for owner reader to be
-    // ready.
-    private final Set<MessageQueue> allocatedSet;
-    private final Map<Integer, Set<RocketMQPartitionSplit>> pendingSplitAssignmentMap;
+    private final OffsetsInitializer startingOffsetsInitializer;
+    private final OffsetsInitializer stoppingOffsetsInitializer;
+    private final OffsetsInitializer newDiscoveryOffsetsInitializer;
+    private final Configuration configuration;
+    private final long partitionDiscoveryIntervalMs;
+    private final SplitEnumeratorContext<RocketMQPartitionSplit> context;
+    private final Boundedness boundedness;
+    /** Partitions that have been assigned to readers. */
+    private final Set<MessageQueue> assignedPartitions;
+    /**
+     * The partitions that have been discovered during initialization but not assigned to readers
+     * yet.
+     */
+    private final Set<MessageQueue> unassignedInitialPartitions;
+
+    private final Map<Integer, Set<RocketMQPartitionSplit>> pendingPartitionSplitAssignment;
     // Param from configuration
     private final String groupId;
-    private final long partitionDiscoveryIntervalMs;
     private InnerConsumer consumer;
 
+    // This flag will be marked as true if periodically partition discovery is disabled AND the
+    // initializing partition discovery has finished.
+    private boolean noMoreNewPartitionSplits = false;
+    // this flag will be marked as true if initial partitions are discovered after enumerator starts
+    private boolean initialDiscoveryFinished;
+
     public RocketMQSourceEnumerator(
-            OffsetsInitializer startingOffsetsSelector,
-            OffsetsInitializer stoppingOffsetsSelector,
+            OffsetsInitializer startingOffsetsInitializer,
+            OffsetsInitializer stoppingOffsetsInitializer,
             Boundedness boundedness,
             Configuration configuration,
             SplitEnumeratorContext<RocketMQPartitionSplit> context) {
 
         this(
-                startingOffsetsSelector,
-                stoppingOffsetsSelector,
+                startingOffsetsInitializer,
+                stoppingOffsetsInitializer,
                 boundedness,
                 configuration,
                 context,
-                new HashSet<>());
+                new RocketMQSourceEnumState(Collections.emptySet(), false));
     }
 
     public RocketMQSourceEnumerator(
             OffsetsInitializer startingOffsetsInitializer,
-            OffsetsInitializer stoppingOffsetsSelector,
+            OffsetsInitializer stoppingOffsetsInitializer,
             Boundedness boundedness,
             Configuration configuration,
             SplitEnumeratorContext<RocketMQPartitionSplit> context,
-            Set<MessageQueue> currentSplitAssignment) {
+            RocketMQSourceEnumState rocketMQSourceEnumState) {
+        this.startingOffsetsInitializer = startingOffsetsInitializer;
+        this.stoppingOffsetsInitializer = stoppingOffsetsInitializer;
+        this.newDiscoveryOffsetsInitializer = OffsetsInitializer.earliest();
         this.configuration = configuration;
         this.context = context;
         this.boundedness = boundedness;
 
+        this.assignedPartitions = new HashSet<>(rocketMQSourceEnumState.assignedPartitions());
+        this.unassignedInitialPartitions =
+                new HashSet<>(rocketMQSourceEnumState.unassignedInitialPartitions());
         // Support allocate splits to reader
-        this.pendingSplitAssignmentMap = new ConcurrentHashMap<>();
-        this.allocatedSet = new HashSet<>(currentSplitAssignment);
+        this.pendingPartitionSplitAssignment = new HashMap<>();
+        this.partitionDiscoveryIntervalMs =
+                configuration.get(RocketMQSourceOptions.PARTITION_DISCOVERY_INTERVAL_MS);
         this.allocateStrategy =
                 AllocateStrategyFactory.getStrategy(
-                        configuration, context, new RocketMQSourceEnumState(allocatedSet));
+                        configuration, context, rocketMQSourceEnumState);
 
         // For rocketmq setting
         this.groupId = configuration.get(RocketMQConnectorOptions.GROUP);
-        this.startingOffsetsSelector = startingOffsetsInitializer;
-        this.stoppingOffsetsSelector = stoppingOffsetsSelector;
-        this.partitionDiscoveryIntervalMs =
-                configuration.get(RocketMQSourceOptions.PARTITION_DISCOVERY_INTERVAL_MS);
     }
 
     @Override
@@ -128,24 +141,24 @@ public class RocketMQSourceEnumerator
         consumer.start();
 
         if (partitionDiscoveryIntervalMs > 0) {
-            log.info(
+            LOG.info(
                     "Starting the RocketMQSourceEnumerator for consumer group {} "
                             + "with partition discovery interval of {} ms.",
                     groupId,
                     partitionDiscoveryIntervalMs);
 
             context.callAsync(
-                    this::requestServiceDiscovery,
-                    this::handleSourceQueueChange,
+                    this::getSubscribedMessageQueue,
+                    this::checkPartitionChanges,
                     0,
                     partitionDiscoveryIntervalMs);
         } else {
-            log.info(
+            LOG.info(
                     "Starting the RocketMQSourceEnumerator for consumer group {} "
                             + "without periodic partition discovery.",
                     groupId);
 
-            context.callAsync(this::requestServiceDiscovery, this::handleSourceQueueChange);
+            context.callAsync(this::getSubscribedMessageQueue, this::checkPartitionChanges);
         }
     }
 
@@ -163,33 +176,26 @@ public class RocketMQSourceEnumerator
      */
     @Override
     public void addSplitsBack(List<RocketMQPartitionSplit> splits, int subtaskId) {
-        SourceSplitChangeResult sourceSplitChangeResult =
-                new SourceSplitChangeResult(new HashSet<>(splits));
-        this.calculateSplitAssignment(sourceSplitChangeResult);
+        this.addPartitionSplitChangeToPendingAssignments(splits);
         // If the failed subtask has already restarted, we need to assign splits to it
         if (context.registeredReaders().containsKey(subtaskId)) {
-            sendSplitChangesToRemote(Collections.singleton(subtaskId));
+            assignPendingPartitionSplits(Collections.singleton(subtaskId));
         }
     }
 
     @Override
     public void addReader(int subtaskId) {
-        log.debug(
+        LOG.debug(
                 "Adding reader {} to RocketMQSourceEnumerator for consumer group {}.",
                 subtaskId,
                 groupId);
-        sendSplitChangesToRemote(Collections.singleton(subtaskId));
-        if (this.boundedness == Boundedness.BOUNDED) {
-            // for RocketMQ bounded source,
-            // send this signal to ensure the task can end after all the splits assigned are
-            // completed.
-            context.signalNoMoreSplits(subtaskId);
-        }
+        assignPendingPartitionSplits(Collections.singleton(subtaskId));
     }
 
     @Override
     public RocketMQSourceEnumState snapshotState(long checkpointId) {
-        return new RocketMQSourceEnumState(allocatedSet);
+        return new RocketMQSourceEnumState(
+                assignedPartitions, unassignedInitialPartitions, initialDiscoveryFinished);
     }
 
     @Override
@@ -199,14 +205,14 @@ public class RocketMQSourceEnumerator
                 consumer.close();
                 consumer = null;
             } catch (Exception e) {
-                log.error("Shutdown rocketmq internal consumer error", e);
+                LOG.error("Shutdown rocketmq internal consumer error", e);
             }
         }
     }
 
     // ----------------- private methods -------------------
 
-    private Set<MessageQueue> requestServiceDiscovery() {
+    private Set<MessageQueue> getSubscribedMessageQueue() {
         Set<String> topicSet =
                 Sets.newHashSet(
                         configuration
@@ -219,35 +225,47 @@ public class RocketMQSourceEnumerator
     }
 
     // This method should only be invoked in the coordinator executor thread.
-    private void handleSourceQueueChange(Set<MessageQueue> latestSet, Throwable t) {
+    private void checkPartitionChanges(Set<MessageQueue> fetchedPartitions, Throwable t) {
         if (t != null) {
-            throw new FlinkRuntimeException("Failed to handle source splits change due to ", t);
+            throw new FlinkRuntimeException("Failed to list subscribed MessageQueue due to ", t);
         }
 
-        final SourceChangeResult sourceChangeResult = getSourceChangeResult(latestSet);
-        if (sourceChangeResult.isEmpty()) {
-            log.debug("Skip handle source allocated due to not queue change");
+        if (!initialDiscoveryFinished) {
+            unassignedInitialPartitions.addAll(fetchedPartitions);
+            initialDiscoveryFinished = true;
+        }
+
+        final PartitionChange partitionChange = getPartitionChange(fetchedPartitions);
+        if (partitionChange.isEmpty()) {
+            LOG.debug("Skip handle source allocated due to not queue change");
             return;
         }
 
         context.callAsync(
-                () -> initializeSourceSplits(sourceChangeResult), this::handleSplitChanges);
+                () -> initializePartitionSplits(partitionChange),
+                this::handlePartitionSplitChanges);
     }
 
     // This method should only be invoked in the coordinator executor thread.
-    private SourceSplitChangeResult initializeSourceSplits(SourceChangeResult sourceChangeResult) {
-        Set<MessageQueue> increaseSet = sourceChangeResult.getIncreaseSet();
+    private PartitionSplitChange initializePartitionSplits(PartitionChange partitionChange) {
+        Set<MessageQueue> newPartitions = partitionChange.getNewPartitions();
 
         OffsetsInitializer.MessageQueueOffsetsRetriever offsetsRetriever =
                 new RemotingOffsetsRetriever(consumer);
 
-        Map<MessageQueue, Long> startingOffsets =
-                startingOffsetsSelector.getMessageQueueOffsets(increaseSet, offsetsRetriever);
-        Map<MessageQueue, Long> stoppingOffsets =
-                stoppingOffsetsSelector.getMessageQueueOffsets(increaseSet, offsetsRetriever);
+        Map<MessageQueue, Long> startingOffsets = new HashMap<>();
+        startingOffsets.putAll(
+                newDiscoveryOffsetsInitializer.getMessageQueueOffsets(
+                        newPartitions, offsetsRetriever));
+        startingOffsets.putAll(
+                startingOffsetsInitializer.getMessageQueueOffsets(
+                        unassignedInitialPartitions, offsetsRetriever));
 
-        Set<RocketMQPartitionSplit> increaseSplitSet =
-                increaseSet.stream()
+        Map<MessageQueue, Long> stoppingOffsets =
+                stoppingOffsetsInitializer.getMessageQueueOffsets(newPartitions, offsetsRetriever);
+
+        Set<RocketMQPartitionSplit> partitionSplits =
+                newPartitions.stream()
                         .map(
                                 mq -> {
                                     long startingOffset = startingOffsets.get(mq);
@@ -259,160 +277,171 @@ public class RocketMQSourceEnumerator
                                 })
                         .collect(Collectors.toSet());
 
-        return new SourceSplitChangeResult(increaseSplitSet, sourceChangeResult.getDecreaseSet());
+        return new PartitionSplitChange(partitionSplits, partitionChange.getRemovedPartitions());
     }
 
     /**
      * Mark partition splits initialized by {@link
-     * RocketMQSourceEnumerator#initializeSourceSplits(SourceChangeResult)} as pending and try to
+     * RocketMQSourceEnumerator#initializePartitionSplits(PartitionChange)} as pending and try to
      * assign pending splits to registered readers.
      *
      * <p>NOTE: This method should only be invoked in the coordinator executor thread.
      *
-     * @param sourceSplitChangeResult Partition split changes
+     * @param partitionSplitChange Partition split changes
      * @param t Exception in worker thread
      */
-    private void handleSplitChanges(SourceSplitChangeResult sourceSplitChangeResult, Throwable t) {
+    private void handlePartitionSplitChanges(
+            PartitionSplitChange partitionSplitChange, Throwable t) {
         if (t != null) {
             throw new FlinkRuntimeException("Failed to initialize partition splits due to ", t);
         }
         if (partitionDiscoveryIntervalMs <= 0) {
-            log.info("Split changes, but dynamic partition discovery is disabled.");
+            LOG.info("Split changes, but dynamic partition discovery is disabled.");
+            noMoreNewPartitionSplits = true;
         }
-        this.calculateSplitAssignment(sourceSplitChangeResult);
-        this.sendSplitChangesToRemote(context.registeredReaders().keySet());
+        addPartitionSplitChangeToPendingAssignments(partitionSplitChange.getNewPartitionSplits());
+        assignPendingPartitionSplits(context.registeredReaders().keySet());
     }
 
     /** Calculate new split assignment according allocate strategy */
-    private void calculateSplitAssignment(SourceSplitChangeResult sourceSplitChangeResult) {
+    private void addPartitionSplitChangeToPendingAssignments(
+            Collection<RocketMQPartitionSplit> newPartitionSplits) {
         Map<Integer, Set<RocketMQPartitionSplit>> newSourceSplitAllocateMap =
-                this.allocateStrategy.allocate(
-                        sourceSplitChangeResult.getIncreaseSet(), context.currentParallelism());
+                this.allocateStrategy.allocate(newPartitionSplits, context.currentParallelism());
 
-        for (Map.Entry<Integer, Set<RocketMQPartitionSplit>> entry :
-                newSourceSplitAllocateMap.entrySet()) {
-            this.pendingSplitAssignmentMap
-                    .computeIfAbsent(entry.getKey(), r -> new HashSet<>())
-                    .addAll(entry.getValue());
-        }
+        newSourceSplitAllocateMap.forEach(
+                (key, value) ->
+                        pendingPartitionSplitAssignment
+                                .computeIfAbsent(key, r -> new HashSet<>())
+                                .addAll(value));
     }
 
     // This method should only be invoked in the coordinator executor thread.
-    private void sendSplitChangesToRemote(Set<Integer> pendingReaders) {
-        Map<Integer, List<RocketMQPartitionSplit>> incrementalSplit = new ConcurrentHashMap<>();
+    private void assignPendingPartitionSplits(Set<Integer> pendingReaders) {
+        Map<Integer, List<RocketMQPartitionSplit>> incrementalAssignment = new HashMap<>();
 
         for (Integer pendingReader : pendingReaders) {
-            if (!context.registeredReaders().containsKey(pendingReader)) {
-                throw new IllegalStateException(
-                        String.format(
-                                "Reader %d is not registered to source coordinator",
-                                pendingReader));
-            }
+            checkReaderRegistered(pendingReader);
 
             final Set<RocketMQPartitionSplit> pendingAssignmentForReader =
-                    this.pendingSplitAssignmentMap.remove(pendingReader);
+                    this.pendingPartitionSplitAssignment.remove(pendingReader);
 
-            // Put pending assignment into incremental assignment
             if (pendingAssignmentForReader != null && !pendingAssignmentForReader.isEmpty()) {
-                incrementalSplit
+                // Put pending assignment into incremental assignment
+                incrementalAssignment
                         .computeIfAbsent(pendingReader, k -> new ArrayList<>())
                         .addAll(pendingAssignmentForReader);
+                // Mark pending partitions as already assigned
                 pendingAssignmentForReader.forEach(
-                        split -> this.allocatedSet.add(split.getMessageQueue()));
+                        split -> {
+                            assignedPartitions.add(split.getMessageQueue());
+                            unassignedInitialPartitions.remove(split.getMessageQueue());
+                        });
             }
         }
 
         // Assign pending splits to readers
-        if (!incrementalSplit.isEmpty()) {
-            log.info(
-                    "Enumerator assigning split(s) to readers {}",
-                    JSON.toJSONString(incrementalSplit, false));
-            context.assignSplits(new SplitsAssignment<>(incrementalSplit));
+        if (!incrementalAssignment.isEmpty()) {
+            LOG.info("Enumerator assigning split(s) to readers {}", incrementalAssignment);
+            context.assignSplits(new SplitsAssignment<>(incrementalAssignment));
         }
 
-        // Sends NoMoreSplitsEvent to the readers if there is no more partition.
-        if (partitionDiscoveryIntervalMs <= 0 && this.boundedness == Boundedness.BOUNDED) {
-            log.info(
+        // If periodically partition discovery is disabled and the initializing discovery has done,
+        // signal NoMoreSplitsEvent to pending readers
+        if (noMoreNewPartitionSplits && this.boundedness == Boundedness.BOUNDED) {
+            LOG.info(
                     "No more rocketmq partition to assign. "
-                            + "Sending NoMoreSplitsEvent to the readers in consumer group {}.",
+                            + "Sending NoMoreSplitsEvent to the reader {} in consumer group {}.",
+                    pendingReaders,
                     groupId);
             pendingReaders.forEach(this.context::signalNoMoreSplits);
         }
     }
 
-    @VisibleForTesting
-    private SourceChangeResult getSourceChangeResult(Set<MessageQueue> latestSet) {
-        Set<MessageQueue> currentSet = Collections.unmodifiableSet(this.allocatedSet);
-        Set<MessageQueue> increaseSet = Sets.difference(latestSet, currentSet);
-        Set<MessageQueue> decreaseSet = Sets.difference(currentSet, latestSet);
-
-        SourceChangeResult changeResult = new SourceChangeResult(increaseSet, decreaseSet);
-
-        // Current topic route is same as before
-        if (changeResult.isEmpty()) {
-            log.info(
-                    "Request topic route for service discovery, current allocated queues size={}",
-                    currentSet.size());
-        } else {
-            log.info(
-                    "Request topic route for service discovery, current allocated queues size: {}. "
-                            + "Changed details, current={}, latest={}, increase={}, decrease={}",
-                    currentSet.size(),
-                    currentSet,
-                    latestSet,
-                    increaseSet,
-                    decreaseSet);
+    private void checkReaderRegistered(Integer pendingReader) {
+        if (!context.registeredReaders().containsKey(pendingReader)) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Reader %d is not registered to source coordinator", pendingReader));
         }
-        return changeResult;
+    }
+
+    @VisibleForTesting
+    private PartitionChange getPartitionChange(Set<MessageQueue> fetchedPartitions) {
+
+        Set<MessageQueue> removedPartitions = new HashSet<>();
+
+        Consumer<MessageQueue> dedupOrMarkAsRemoved =
+                partition -> {
+                    if (!fetchedPartitions.remove(partition)) {
+                        removedPartitions.add(partition);
+                    }
+                };
+
+        assignedPartitions.forEach(dedupOrMarkAsRemoved);
+
+        pendingPartitionSplitAssignment.forEach(
+                (reader, splits) ->
+                        splits.forEach(
+                                split -> dedupOrMarkAsRemoved.accept(split.getMessageQueue())));
+
+        if (!fetchedPartitions.isEmpty()) {
+            LOG.info("Discovered new partitions: {}", fetchedPartitions);
+        }
+        if (!removedPartitions.isEmpty()) {
+            LOG.info("Discovered removed partitions: {}", removedPartitions);
+        }
+        return new PartitionChange(fetchedPartitions, removedPartitions);
     }
 
     /** A container class to hold the newly added partitions and removed partitions. */
     @VisibleForTesting
-    private static class SourceChangeResult {
-        private final Set<MessageQueue> increaseSet;
-        private final Set<MessageQueue> decreaseSet;
+    private static class PartitionChange {
+        private final Set<MessageQueue> newPartitions;
+        private final Set<MessageQueue> removedPartitions;
 
-        public SourceChangeResult(Set<MessageQueue> increaseSet, Set<MessageQueue> decreaseSet) {
-            this.increaseSet = increaseSet;
-            this.decreaseSet = decreaseSet;
+        public PartitionChange(
+                Set<MessageQueue> newPartitions, Set<MessageQueue> removedPartitions) {
+            this.newPartitions = newPartitions;
+            this.removedPartitions = removedPartitions;
         }
 
-        public Set<MessageQueue> getIncreaseSet() {
-            return increaseSet;
+        public Set<MessageQueue> getNewPartitions() {
+            return newPartitions;
         }
 
-        public Set<MessageQueue> getDecreaseSet() {
-            return decreaseSet;
+        public Set<MessageQueue> getRemovedPartitions() {
+            return removedPartitions;
         }
 
         public boolean isEmpty() {
-            return increaseSet.isEmpty() && decreaseSet.isEmpty();
+            return newPartitions.isEmpty() && removedPartitions.isEmpty();
         }
     }
 
     @VisibleForTesting
-    public static class SourceSplitChangeResult {
+    public static class PartitionSplitChange {
 
-        private final Set<RocketMQPartitionSplit> increaseSet;
-        private final Set<MessageQueue> decreaseSet;
+        private final Set<RocketMQPartitionSplit> newPartitionSplits;
+        private final Set<MessageQueue> removedPartitions;
 
-        private SourceSplitChangeResult(Set<RocketMQPartitionSplit> increaseSet) {
-            this.increaseSet = Collections.unmodifiableSet(increaseSet);
-            this.decreaseSet = Sets.newHashSet();
+        private PartitionSplitChange(Set<RocketMQPartitionSplit> newPartitionSplits) {
+            this(newPartitionSplits, Collections.emptySet());
         }
 
-        private SourceSplitChangeResult(
-                Set<RocketMQPartitionSplit> increaseSet, Set<MessageQueue> decreaseSet) {
-            this.increaseSet = Collections.unmodifiableSet(increaseSet);
-            this.decreaseSet = Collections.unmodifiableSet(decreaseSet);
+        private PartitionSplitChange(
+                Set<RocketMQPartitionSplit> newPartitionSplits,
+                Set<MessageQueue> removedPartitions) {
+            this.newPartitionSplits = Collections.unmodifiableSet(newPartitionSplits);
+            this.removedPartitions = Collections.unmodifiableSet(removedPartitions);
         }
 
-        public Set<RocketMQPartitionSplit> getIncreaseSet() {
-            return increaseSet;
+        public Set<RocketMQPartitionSplit> getNewPartitionSplits() {
+            return newPartitionSplits;
         }
 
-        public Set<MessageQueue> getDecreaseSet() {
-            return decreaseSet;
+        public Set<MessageQueue> getRemovedPartitions() {
+            return removedPartitions;
         }
     }
 }
