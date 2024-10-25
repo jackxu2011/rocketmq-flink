@@ -234,7 +234,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
             case GROUP_OFFSETS:
                 String offsetResetStrategy =
                         properties.getProperty(
-                                RocketMQSourceOptions.AUTO_OFFSET_RESET_STRATEGY.key(),
+                                RocketMQSourceOptions.OFFSET_RESET_STRATEGY.key(),
                                 OffsetResetStrategy.NONE.name());
 
                 rocketMQSourceBuilder.setBounded(

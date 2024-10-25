@@ -20,7 +20,7 @@ package org.apache.flink.connector.rocketmq.source.table;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
-import org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSourceFactory;
+import org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableFactory;
 import org.apache.flink.connector.rocketmq.table.RocketMQScanTableSource;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.ValidationException;
@@ -44,8 +44,8 @@ import static org.apache.flink.table.api.DataTypes.STRING;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/** Tests for {@link RocketMQDynamicTableSourceFactory}. */
-public class RocketMQDynamicTableSourceFactoryTest {
+/** Tests for {@link RocketMQDynamicTableFactory}. */
+public class RocketMQDynamicTableFactoryTest {
 
     private static final ResolvedSchema SCHEMA =
             new ResolvedSchema(
@@ -71,7 +71,7 @@ public class RocketMQDynamicTableSourceFactoryTest {
                                 options),
                         SCHEMA),
                 conf,
-                RocketMQDynamicTableSourceFactory.class.getClassLoader(),
+                RocketMQDynamicTableFactory.class.getClassLoader(),
                 false);
     }
 

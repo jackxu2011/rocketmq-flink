@@ -120,9 +120,6 @@ public class RocketMQConnectorOptions {
      */
     public static final ConfigOption<String> ENDPOINTS = RocketMQOptions.ENDPOINTS;
 
-    public static final ConfigOption<Boolean> GLOBAL_DEBUG_MODE =
-            ConfigOptions.key(CLIENT_CONFIG_PREFIX + "debug").booleanType().defaultValue(false);
-
     public static final ConfigOption<String> FILTER_TAG =
             ConfigOptions.key(CLIENT_CONFIG_PREFIX + RocketMQOptions.FILTER_TAG.key())
                     .stringType()

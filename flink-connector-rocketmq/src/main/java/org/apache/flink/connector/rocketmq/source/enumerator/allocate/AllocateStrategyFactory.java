@@ -38,7 +38,7 @@ public class AllocateStrategyFactory {
             RocketMQSourceEnumState enumState) {
 
         String allocateStrategyName =
-                rocketmqSourceOptions.get(RocketMQSourceOptions.ALLOCATE_MESSAGE_QUEUE_STRATEGY);
+                rocketmqSourceOptions.get(RocketMQSourceOptions.PARTITION_ALLOCATE_STRATEGY);
 
         switch (allocateStrategyName) {
             case STRATEGY_NAME_CONSISTENT_HASH:

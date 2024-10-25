@@ -49,7 +49,8 @@ public class RocketMQSourceOptions {
                     .defaultValue(5 * 1000L)
                     .withDescription(
                             "Applies to Consumer, the interval for persisting consumption progress");
-    public static final ConfigOption<OffsetResetStrategy> AUTO_OFFSET_RESET_STRATEGY =
+
+    public static final ConfigOption<OffsetResetStrategy> OFFSET_RESET_STRATEGY =
             ConfigOptions.key("offset.reset.strategy")
                     .enumType(OffsetResetStrategy.class)
                     .noDefaultValue()
@@ -62,11 +63,11 @@ public class RocketMQSourceOptions {
                     .withDescription(
                             "Time interval for polling route information from nameserver or proxy");
 
-    public static final ConfigOption<String> ALLOCATE_MESSAGE_QUEUE_STRATEGY =
-            ConfigOptions.key("allocate.strategy")
+    public static final ConfigOption<String> PARTITION_ALLOCATE_STRATEGY =
+            ConfigOptions.key("partition.allocate.strategy")
                     .stringType()
                     .defaultValue(AllocateStrategyFactory.STRATEGY_NAME_CONSISTENT_HASH)
-                    .withDescription("The load balancing strategy algorithm");
+                    .withDescription("The partition allocate strategy algorithm");
 
     public static final ConfigOption<Long> POLL_TIMEOUT =
             ConfigOptions.key("poll.timeout")

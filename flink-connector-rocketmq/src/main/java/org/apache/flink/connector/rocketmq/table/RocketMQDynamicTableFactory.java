@@ -72,9 +72,7 @@ import static org.apache.flink.table.factories.FactoryUtil.createTableFactoryHel
  * Defines the {@link DynamicTableSourceFactory} implementation to create {@link
  * RocketMQScanTableSource}.
  */
-public class RocketMQDynamicTableSourceFactory implements DynamicTableSourceFactory {
-
-    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+public class RocketMQDynamicTableFactory implements DynamicTableSourceFactory {
 
     @Override
     public String factoryIdentifier() {

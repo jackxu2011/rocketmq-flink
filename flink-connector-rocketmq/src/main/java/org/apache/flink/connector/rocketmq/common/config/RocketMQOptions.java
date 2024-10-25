@@ -55,13 +55,6 @@ public class RocketMQOptions {
                             "A consumer group is a load balancing group that contains consumers that use the same consumption behaviors."
                                     + "also support producer group which is discontinued.");
 
-    public static final ConfigOption<String> FILTER_TAG =
-            ConfigOptions.key("filter.tag")
-                    .stringType()
-                    .defaultValue("*")
-                    .withDescription(
-                            "for message filter, rocketmq assign mode only support tag filter option");
-
     /**
      * rocketmq v4 endpoints means nameserver address rocketmq v5 endpoints means proxy server
      * address
@@ -84,9 +77,6 @@ public class RocketMQOptions {
                     .stringType()
                     .noDefaultValue()
                     .withDescription("The prefix to use for the rocketmq client.");
-
-    public static final ConfigOption<Boolean> GLOBAL_DEBUG_MODE =
-            ConfigOptions.key("debug").booleanType().defaultValue(false);
 
     public static final ConfigOption<String> NAMESPACE =
             ConfigOptions.key("namespace")
