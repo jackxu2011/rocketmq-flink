@@ -79,6 +79,12 @@ public class RocketMQOptions {
     public static final ConfigOption<String> SECRET_KEY =
             ConfigOptions.key("secretKey").stringType().noDefaultValue();
 
+    public static final ConfigOption<String> CLIENT_ID_PREFIX =
+            ConfigOptions.key("client.id.prefix")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("The prefix to use for the rocketmq client.");
+
     public static final ConfigOption<Boolean> GLOBAL_DEBUG_MODE =
             ConfigOptions.key("debug").booleanType().defaultValue(false);
 

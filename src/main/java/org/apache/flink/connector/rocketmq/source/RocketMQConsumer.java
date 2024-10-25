@@ -92,21 +92,11 @@ public class RocketMQConsumer implements InnerConsumer {
         this.consumer.setConsumerGroup(groupId);
         this.consumer.setAutoCommit(false);
         this.consumer.setVipChannelEnabled(false);
-        this.consumer.setInstanceName(
-                String.join(
-                        "#",
-                        ManagementFactory.getRuntimeMXBean().getName(),
-                        groupId,
-                        UUID.randomUUID().toString()));
+        this.consumer.setInstanceName(createInstanceName(configuration, groupId));
         this.adminExt.setNamesrvAddr(endPoints);
         this.adminExt.setAdminExtGroup(groupId);
         this.adminExt.setVipChannelEnabled(false);
-        this.adminExt.setInstanceName(
-                String.join(
-                        "#",
-                        ManagementFactory.getRuntimeMXBean().getName(),
-                        groupId,
-                        UUID.randomUUID().toString()));
+        this.adminExt.setInstanceName(createInstanceName(configuration, groupId));
         List<String> topics =
                 configuration.getOptional(RocketMQOptions.TOPIC).orElseGet(Collections::emptyList);
         if (topics.isEmpty()) {
@@ -114,6 +104,15 @@ public class RocketMQConsumer implements InnerConsumer {
         }
         String tag = configuration.get(RocketMQOptions.FILTER_TAG);
         topics.forEach(topic -> this.consumer.setSubExpressionForAssign(topic, tag));
+    }
+
+    private static String createInstanceName(Configuration configuration, String groupId) {
+        return String.join(
+                "#",
+                configuration.getOptional(RocketMQOptions.CLIENT_ID_PREFIX).orElse("Reader"),
+                ManagementFactory.getRuntimeMXBean().getName(),
+                groupId,
+                UUID.randomUUID().toString());
     }
 
     @Override

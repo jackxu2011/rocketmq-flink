@@ -19,11 +19,13 @@
 package org.apache.flink.connector.rocketmq.source.reader;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsAddition;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.connector.rocketmq.source.InnerConsumer;
 import org.apache.flink.connector.rocketmq.source.RocketMQConsumer;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
@@ -60,11 +62,11 @@ public class RocketMQPartitionSplitReader<T>
         implements SplitReader<MessageView, RocketMQPartitionSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RocketMQPartitionSplitReader.class);
+    private static final String CLIENT_PREFIX = "Split-reader-";
 
     private final Duration POLL_TIMEOUT;
     private final InnerConsumer consumer;
     private final Map<MessageQueue, Long> stoppingOffsets = new HashMap<>();
-    private final Configuration configuration;
 
     private final RocketMQSourceReaderMetrics rocketmqSourceReaderMetrics;
 
@@ -72,11 +74,12 @@ public class RocketMQPartitionSplitReader<T>
     private final Set<String> emptySplits = new HashSet<>();
 
     public RocketMQPartitionSplitReader(
-            Configuration configuration, RocketMQSourceReaderMetrics rocketmqSourceReaderMetrics) {
-
-        this.configuration = configuration;
-        POLL_TIMEOUT =
-                Duration.ofMillis(this.configuration.get(RocketMQSourceOptions.POLL_TIMEOUT));
+            Configuration configuration,
+            SourceReaderContext context,
+            RocketMQSourceReaderMetrics rocketmqSourceReaderMetrics) {
+        configuration.set(
+                RocketMQOptions.CLIENT_ID_PREFIX, CLIENT_PREFIX + context.getIndexOfSubtask());
+        POLL_TIMEOUT = Duration.ofMillis(configuration.get(RocketMQSourceOptions.POLL_TIMEOUT));
         this.consumer = new RocketMQConsumer(configuration);
         this.consumer.start();
         this.rocketmqSourceReaderMetrics = rocketmqSourceReaderMetrics;

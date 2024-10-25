@@ -29,7 +29,6 @@ import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
-import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.synchronization.FutureCompletingBlockingQueue;
 import org.apache.flink.connector.rocketmq.source.enumerator.RocketMQSourceEnumState;
 import org.apache.flink.connector.rocketmq.source.enumerator.RocketMQSourceEnumStateSerializer;
@@ -124,14 +123,14 @@ public class RocketMQSource<OUT>
         final RocketMQSourceReaderMetrics rocketMQSourceReaderMetrics =
                 new RocketMQSourceReaderMetrics(readerContext.metricGroup());
 
-        Supplier<SplitReader<MessageView, RocketMQPartitionSplit>> splitReaderSupplier =
+        Supplier<RocketMQPartitionSplitReader<MessageView>> splitReaderSupplier =
                 () ->
                         new RocketMQPartitionSplitReader<>(
-                                configuration, rocketMQSourceReaderMetrics);
+                                configuration, readerContext, rocketMQSourceReaderMetrics);
 
         RocketMQSourceFetcherManager rocketmqSourceFetcherManager =
                 new RocketMQSourceFetcherManager(
-                        elementsQueue, splitReaderSupplier, (ignore) -> {});
+                        elementsQueue, splitReaderSupplier::get, (ignore) -> {});
 
         RocketMQRecordEmitter<OUT> recordEmitter =
                 new RocketMQRecordEmitter<>(deserializationSchema);
