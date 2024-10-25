@@ -85,6 +85,8 @@ public class RocketMQDynamicTableSourceFactoryTest {
         options.put("connector", IDENTIFIER);
         options.put(RocketMQConnectorOptions.TOPIC.key(), TOPIC);
         options.put(RocketMQConnectorOptions.GROUP.key(), CONSUMER_GROUP);
+        options.put(RocketMQConnectorOptions.ENDPOINTS.key(), NAME_SERVER_ADDRESS);
+        options.put(FactoryUtil.FORMAT.key(), "csv");
         options.put(
                 RocketMQConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS.key(),
                 String.valueOf(System.currentTimeMillis()));

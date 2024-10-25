@@ -21,14 +21,11 @@ package org.apache.flink.connector.rocketmq.legacy.common.util;
 import org.apache.flink.connector.rocketmq.legacy.RunningChecker;
 
 import junit.framework.TestCase;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /** Tests for {@link RetryUtil}. */
-@Slf4j
 public class RetryUtilTest extends TestCase {
 
     public void testCall() {
@@ -49,18 +46,32 @@ public class RetryUtilTest extends TestCase {
                                     runningChecker));
             Thread.sleep(10000);
             executorService.shutdown();
-            log.info("Thread has finished");
             assertEquals(0, user.age);
             assertEquals("test", user.name);
             assertEquals(false, runningChecker.isRunning());
         } catch (Exception e) {
-            log.warn("Exception has been caught");
+            // log.warn("Exception has been caught");
         }
     }
 
-    @Data
-    public class User {
+    public static class User {
         String name;
         int age;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
+        }
+
+        public int getAge() {
+            return age;
+        }
     }
 }
