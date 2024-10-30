@@ -14,5 +14,4 @@
 # limitations under the License.
 
 org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableFactory
-org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSinkFactory
 org.apache.flink.connector.rocketmq.catalog.RocketMQCatalogFactory

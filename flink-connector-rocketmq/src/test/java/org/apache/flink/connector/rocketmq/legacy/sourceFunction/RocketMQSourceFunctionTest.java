@@ -19,7 +19,7 @@
 package org.apache.flink.connector.rocketmq.legacy.sourceFunction;
 
 import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
-import org.apache.flink.connector.rocketmq.legacy.RocketMQConfig;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.legacy.RocketMQSourceFunction;
 import org.apache.flink.connector.rocketmq.legacy.common.config.StartupMode;
 import org.apache.flink.connector.rocketmq.legacy.common.serialization.SimpleStringDeserializationSchema;
@@ -75,9 +75,9 @@ public class RocketMQSourceFunctionTest {
         DefaultLitePullConsumer consumer = Mockito.mock(DefaultLitePullConsumer.class);
         Mockito.when(consumer.committed(Mockito.any())).thenReturn(40L);
         Properties properties = new Properties();
-        properties.setProperty(RocketMQConfig.CONSUMER_GROUP, "${ConsumerGroup}");
-        properties.setProperty(RocketMQConfig.CONSUMER_TOPIC, "${SourceTopic}");
-        properties.setProperty(RocketMQConfig.CONSUMER_TAG, RocketMQConfig.DEFAULT_CONSUMER_TAG);
+        properties.setProperty(RocketMQConfig.GROUP, "${ConsumerGroup}");
+        properties.setProperty(RocketMQConfig.TOPIC, "${SourceTopic}");
+        properties.setProperty(RocketMQConfig.FILTER_TAG, RocketMQConfig.DEFAULT_FILTER_TAG);
         RocketMQSourceFunction<String> source =
                 new RocketMQSourceFunction<>(new SimpleStringDeserializationSchema(), properties);
         source.setStartFromLatest();

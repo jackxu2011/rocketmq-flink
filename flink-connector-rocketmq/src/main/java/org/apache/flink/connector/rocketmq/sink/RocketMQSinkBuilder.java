@@ -25,12 +25,12 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigBuilder;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQConfigValidator;
-import org.apache.flink.connector.rocketmq.legacy.common.selector.MessageQueueSelector;
 import org.apache.flink.connector.rocketmq.sink.writer.serializer.RocketMQSerializationSchema;
 import org.apache.flink.connector.rocketmq.source.RocketMQSource;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 
+import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ public class RocketMQSinkBuilder<IN> {
     private static final Logger LOG = LoggerFactory.getLogger(RocketMQSinkBuilder.class);
     private final RocketMQConfigBuilder configBuilder;
     private RocketMQSerializationSchema<IN> serializer;
-    private MessageQueueSelector messageQueueSelector;
+    private MessageQueueSelector partitioner;
 
     public RocketMQSinkBuilder() {
         this.configBuilder = new RocketMQConfigBuilder();
@@ -64,7 +64,7 @@ public class RocketMQSinkBuilder<IN> {
      * @return the client configuration builder instance.
      */
     public RocketMQSinkBuilder<IN> setEndpoints(String endpoints) {
-        return this.setConfig(RocketMQSinkConnectorOptions.ENDPOINTS, endpoints);
+        return this.setConfig(RocketMQSinkOptions.ENDPOINTS, endpoints);
     }
 
     /**
@@ -74,7 +74,7 @@ public class RocketMQSinkBuilder<IN> {
      * @return this RocketMQSourceBuilder.
      */
     public RocketMQSinkBuilder<IN> setGroupId(String groupId) {
-        this.configBuilder.set(RocketMQSinkConnectorOptions.PRODUCER_GROUP, groupId);
+        this.configBuilder.set(RocketMQSinkOptions.GROUP, groupId);
         return this;
     }
 
@@ -86,15 +86,13 @@ public class RocketMQSinkBuilder<IN> {
      */
     public RocketMQSinkBuilder<IN> setDeliveryGuarantee(DeliveryGuarantee deliveryGuarantee) {
         checkNotNull(deliveryGuarantee, "delivery guarantee is null");
-        this.configBuilder.set(
-                RocketMQSinkConnectorOptions.DELIVERY_GUARANTEE, deliveryGuarantee.name());
+        this.configBuilder.set(RocketMQSinkOptions.DELIVERY_GUARANTEE, deliveryGuarantee.name());
         return this;
     }
 
-    public RocketMQSinkBuilder<IN> setMessageQueueSelector(
-            MessageQueueSelector messageQueueSelector) {
-        checkNotNull(messageQueueSelector, "message queue selector is null");
-        this.messageQueueSelector = messageQueueSelector;
+    public RocketMQSinkBuilder<IN> setPartitioner(MessageQueueSelector partitioner) {
+        checkNotNull(partitioner, "message queue selector is null");
+        this.partitioner = partitioner;
         return this;
     }
 
@@ -115,7 +113,7 @@ public class RocketMQSinkBuilder<IN> {
 
     /**
      * Set arbitrary properties for the RocketMQSink and RocketMQ Consumer. The valid keys can be
-     * found in {@link RocketMQSinkConnectorOptions} and {@link RocketMQConnectorOptions}.
+     * found in {@link RocketMQSinkOptions} and {@link RocketMQConnectorOptions}.
      *
      * @param config the config to set for the RocketMQSink.
      * @return this RocketMQSinkBuilder.
@@ -127,7 +125,7 @@ public class RocketMQSinkBuilder<IN> {
 
     /**
      * Set arbitrary properties for the RocketMQSink and RocketMQ Consumer. The valid keys can be
-     * found in {@link RocketMQSinkConnectorOptions} and {@link RocketMQConnectorOptions}.
+     * found in {@link RocketMQSinkOptions} and {@link RocketMQConnectorOptions}.
      *
      * @param properties the config properties to set for the RocketMQSink.
      * @return this RocketMQSinkBuilder.
@@ -159,7 +157,7 @@ public class RocketMQSinkBuilder<IN> {
         sanityCheck();
         parseAndSetRequiredProperties();
         return new RocketMQSink<>(
-                configBuilder.build(SINK_CONFIG_VALIDATOR), messageQueueSelector, serializer);
+                configBuilder.build(SINK_CONFIG_VALIDATOR), partitioner, serializer);
     }
 
     // ------------- private helpers  --------------

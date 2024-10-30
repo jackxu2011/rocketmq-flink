@@ -19,7 +19,7 @@ package org.apache.flink.connector.rocketmq.example;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.apache.flink.connector.rocketmq.legacy.RocketMQConfig;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.legacy.RocketMQSink;
 import org.apache.flink.connector.rocketmq.legacy.RocketMQSourceFunction;
 import org.apache.flink.connector.rocketmq.legacy.common.serialization.SimpleTupleDeserializationSchema;
@@ -36,8 +36,8 @@ import org.apache.rocketmq.client.AccessChannel;
 
 import java.util.Properties;
 
-import static org.apache.flink.connector.rocketmq.legacy.RocketMQConfig.CONSUMER_OFFSET_LATEST;
-import static org.apache.flink.connector.rocketmq.legacy.RocketMQConfig.DEFAULT_CONSUMER_TAG;
+import static org.apache.flink.connector.rocketmq.common.config.RocketMQConfig.CONSUMER_OFFSET_LATEST;
+import static org.apache.flink.connector.rocketmq.common.config.RocketMQConfig.DEFAULT_FILTER_TAG;
 
 public class LegacyConnectorExample {
 
@@ -49,11 +49,11 @@ public class LegacyConnectorExample {
     private static Properties getConsumerProps() {
         Properties consumerProps = new Properties();
         consumerProps.setProperty(
-                RocketMQConfig.NAME_SERVER_ADDR,
+                RocketMQConfig.ENDPOINTS,
                 "http://${instanceId}.${region}.mq-internal.aliyuncs.com:8080");
-        consumerProps.setProperty(RocketMQConfig.CONSUMER_GROUP, "${ConsumerGroup}");
-        consumerProps.setProperty(RocketMQConfig.CONSUMER_TOPIC, "${SourceTopic}");
-        consumerProps.setProperty(RocketMQConfig.CONSUMER_TAG, DEFAULT_CONSUMER_TAG);
+        consumerProps.setProperty(RocketMQConfig.GROUP, "${ConsumerGroup}");
+        consumerProps.setProperty(RocketMQConfig.TOPIC, "${SourceTopic}");
+        consumerProps.setProperty(RocketMQConfig.FILTER_TAG, DEFAULT_FILTER_TAG);
         consumerProps.setProperty(RocketMQConfig.CONSUMER_OFFSET_RESET_TO, CONSUMER_OFFSET_LATEST);
         consumerProps.setProperty(RocketMQConfig.ACCESS_KEY, "${AccessKey}");
         consumerProps.setProperty(RocketMQConfig.SECRET_KEY, "${SecretKey}");
@@ -69,9 +69,9 @@ public class LegacyConnectorExample {
     private static Properties getProducerProps() {
         Properties producerProps = new Properties();
         producerProps.setProperty(
-                RocketMQConfig.NAME_SERVER_ADDR,
+                RocketMQConfig.ENDPOINTS,
                 "http://${instanceId}.${region}.mq-internal.aliyuncs.com:8080");
-        producerProps.setProperty(RocketMQConfig.PRODUCER_GROUP, "${ProducerGroup}");
+        producerProps.setProperty(RocketMQConfig.GROUP, "${ProducerGroup}");
         producerProps.setProperty(RocketMQConfig.ACCESS_KEY, "${AccessKey}");
         producerProps.setProperty(RocketMQConfig.SECRET_KEY, "${SecretKey}");
         producerProps.setProperty(RocketMQConfig.ACCESS_CHANNEL, AccessChannel.CLOUD.name());

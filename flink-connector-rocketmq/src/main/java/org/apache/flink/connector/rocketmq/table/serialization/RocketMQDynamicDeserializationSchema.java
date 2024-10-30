@@ -4,7 +4,7 @@ import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.deserializer.RocketMQDeserializationSchema;
-import org.apache.flink.connector.rocketmq.table.RocketMQScanTableSource;
+import org.apache.flink.connector.rocketmq.table.RocketMQDynamicSource;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.types.DeserializationException;
@@ -15,8 +15,10 @@ import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-/** A specific {@link RocketMQDeserializationSchema} for {@link RocketMQScanTableSource}. */
+/** A specific {@link RocketMQDeserializationSchema} for {@link RocketMQDynamicSource}. */
 public class RocketMQDynamicDeserializationSchema
         implements RocketMQDeserializationSchema<RowData> {
 
@@ -130,12 +132,18 @@ public class RocketMQDynamicDeserializationSchema
                 return;
             }
 
-            // otherwise emit a value for each key
-            for (String key : inputRecord.getKeys()) {
-                GenericRowData physicalKeyRow = new GenericRowData(1);
-                physicalKeyRow.setField(0, key);
-                emitRow(physicalKeyRow, (GenericRowData) physicalValueRow);
+            List<String> keys = new ArrayList<>(inputRecord.getKeys());
+
+            if (keys.size() != keyProjection.length) {
+                throw new IllegalStateException(
+                        "The number of keys in the message does not match the number of keys in the projection.");
             }
+            GenericRowData physicalKeyRow = new GenericRowData(keys.size());
+            // otherwise emit a value for each key
+            for (int i = 0; i < keys.size(); i++) {
+                physicalKeyRow.setField(i, keys.get(i));
+            }
+            emitRow(physicalKeyRow, (GenericRowData) physicalValueRow);
         }
 
         @Override

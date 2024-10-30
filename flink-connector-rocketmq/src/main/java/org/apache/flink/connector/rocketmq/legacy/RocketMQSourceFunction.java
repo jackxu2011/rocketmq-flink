@@ -26,6 +26,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.legacy.common.config.StartupMode;
 import org.apache.flink.connector.rocketmq.legacy.common.serialization.KeyValueDeserializationSchema;
 import org.apache.flink.connector.rocketmq.legacy.common.util.MetricUtils;
@@ -149,14 +150,14 @@ public class RocketMQSourceFunction<OUT> extends RichParallelSourceFunction<OUT>
         log.debug("source open....");
         Validate.notEmpty(props, "Consumer properties can not be empty");
 
-        this.topic = props.getProperty(RocketMQConfig.CONSUMER_TOPIC);
-        this.group = props.getProperty(RocketMQConfig.CONSUMER_GROUP);
+        this.topic = props.getProperty(RocketMQConfig.TOPIC);
+        this.group = props.getProperty(RocketMQConfig.GROUP);
 
         Validate.notEmpty(topic, "Consumer topic can not be empty");
         Validate.notEmpty(group, "Consumer group can not be empty");
 
-        String tag = props.getProperty(RocketMQConfig.CONSUMER_TAG);
-        String sql = props.getProperty(RocketMQConfig.CONSUMER_SQL);
+        String tag = props.getProperty(RocketMQConfig.FILTER_TAG);
+        String sql = props.getProperty(RocketMQConfig.FILTER_SQL);
         Validate.isTrue(
                 !(StringUtils.isNotEmpty(tag) && StringUtils.isNotEmpty(sql)),
                 "Consumer tag and sql can not set value at the same time");
@@ -249,9 +250,9 @@ public class RocketMQSourceFunction<OUT> extends RichParallelSourceFunction<OUT>
 
     @Override
     public void run(SourceContext context) throws Exception {
-        String sql = props.getProperty(RocketMQConfig.CONSUMER_SQL);
+        String sql = props.getProperty(RocketMQConfig.FILTER_SQL);
         String tag =
-                props.getProperty(RocketMQConfig.CONSUMER_TAG, RocketMQConfig.DEFAULT_CONSUMER_TAG);
+                props.getProperty(RocketMQConfig.FILTER_TAG, RocketMQConfig.DEFAULT_FILTER_TAG);
         int pullBatchSize =
                 RocketMQUtils.getInteger(
                         props,

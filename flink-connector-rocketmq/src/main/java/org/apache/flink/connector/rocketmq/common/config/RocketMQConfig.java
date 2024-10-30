@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.connector.rocketmq.legacy;
+package org.apache.flink.connector.rocketmq.common.config;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -35,7 +35,9 @@ import static org.apache.flink.connector.rocketmq.legacy.common.util.RocketMQUti
 /** RocketMQConfig for Consumer/Producer. */
 public class RocketMQConfig {
     // Server Config
-    public static final String NAME_SERVER_ADDR = "nameserver.address"; // Required
+    public static final String ENDPOINTS = "endpoints"; // Required
+    public static final String TOPIC = "topic"; // Required
+    public static final String GROUP = "group";
 
     public static final String NAME_SERVER_POLL_INTERVAL = "nameserver.poll.interval";
     public static final int DEFAULT_NAME_SERVER_POLL_INTERVAL = 30000; // 30 seconds
@@ -50,33 +52,26 @@ public class RocketMQConfig {
     public static final String ACCESS_CHANNEL = "access.channel";
     public static final AccessChannel DEFAULT_ACCESS_CHANNEL = AccessChannel.LOCAL;
 
-    // Producer related config
-    public static final String PRODUCER_TOPIC = "producer.topic";
-    public static final String PRODUCER_GROUP = "producer.group";
-
+    // Sink related config
     public static final String PRODUCER_RETRY_TIMES = "producer.retry.times";
     public static final int DEFAULT_PRODUCER_RETRY_TIMES = 3;
 
     public static final String PRODUCER_TIMEOUT = "producer.timeout";
 
-    public static final String CONSUMER_TIMEOUT = "consumer.timeout";
     public static final int DEFAULT_PRODUCER_TIMEOUT = 3000; // 3 seconds
 
+    // Source related config
+    public static final String FILTER_TAG = "filter.tag";
+    public static final String FILTER_SQL = "filter.sql";
+    public static final String DEFAULT_FILTER_TAG = "*";
+
+    public static final String CONSUMER_TIMEOUT = "consumer.timeout";
     public static final int DEFAULT_CONSUMER_TIMEOUT = 3000; // 3 seconds
-
-    // Consumer related config
-    public static final String CONSUMER_GROUP = "consumer.group"; // Required
-    public static final String CONSUMER_TOPIC = "consumer.topic"; // Required
-
-    public static final String CONSUMER_TAG = "consumer.tag";
-    public static final String CONSUMER_SQL = "consumer.sql";
-    public static final String DEFAULT_CONSUMER_TAG = "*";
 
     public static final String CONSUMER_OFFSET_RESET_TO = "consumer.offset.reset.to";
     public static final String CONSUMER_OFFSET_LATEST = "latest";
     public static final String CONSUMER_OFFSET_EARLIEST = "earliest";
     public static final String CONSUMER_OFFSET_TIMESTAMP = "timestamp";
-    public static final String CONSUMER_OFFSET_FROM_TIMESTAMP = "consumer.offset.from.timestamp";
 
     public static final String CONSUMER_OFFSET_PERSIST_INTERVAL =
             "consumer.offset.persist.interval";
@@ -129,11 +124,11 @@ public class RocketMQConfig {
      */
     public static void buildProducerConfigs(Properties props, DefaultMQProducer producer) {
         buildCommonConfigs(props, producer);
-        String group = props.getProperty(PRODUCER_GROUP);
+        String group = props.getProperty(GROUP);
         if (StringUtils.isEmpty(group)) {
             group = UUID.randomUUID().toString();
         }
-        producer.setProducerGroup(props.getProperty(PRODUCER_GROUP, group));
+        producer.setProducerGroup(props.getProperty(GROUP, group));
         producer.setRetryTimesWhenSendFailed(
                 getInteger(props, PRODUCER_RETRY_TIMES, DEFAULT_PRODUCER_RETRY_TIMES));
         producer.setRetryTimesWhenSendAsyncFailed(
@@ -164,7 +159,7 @@ public class RocketMQConfig {
      * @param client ClientConfig
      */
     public static void buildCommonConfigs(Properties props, ClientConfig client) {
-        String nameServers = props.getProperty(NAME_SERVER_ADDR);
+        String nameServers = props.getProperty(ENDPOINTS);
         Validate.notEmpty(nameServers);
         client.setNamesrvAddr(nameServers);
         client.setHeartbeatBrokerInterval(

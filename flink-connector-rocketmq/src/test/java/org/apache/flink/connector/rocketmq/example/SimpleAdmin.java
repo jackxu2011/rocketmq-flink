@@ -66,9 +66,7 @@ public class SimpleAdmin implements Closeable {
 
     private Set<String> getBrokerAddress()
             throws RemotingException, InterruptedException, MQClientException {
-        return adminExt
-                .examineTopicRouteInfo(ConnectorConfig.CLUSTER_NAME)
-                .getBrokerDatas()
+        return adminExt.examineTopicRouteInfo(ConnectorConfig.CLUSTER_NAME).getBrokerDatas()
                 .stream()
                 .map(BrokerData::selectBrokerAddr)
                 .collect(Collectors.toSet());

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.rocketmq.sink.table;
+package org.apache.flink.connector.rocketmq.table;
 
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.table.data.RowData;
@@ -35,9 +35,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSink.WritableMetadata;
-import static org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSink.WritableMetadata.KEYS;
-import static org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableSink.WritableMetadata.TAGS;
+import static org.apache.flink.connector.rocketmq.table.RocketMQDynamicSink.WritableMetadata;
+import static org.apache.flink.connector.rocketmq.table.RocketMQDynamicSink.WritableMetadata.TAGS;
 import static org.apache.flink.util.Preconditions.checkState;
 
 /** RocketMQRowDataConverter converts the row data of table to RocketMQ message pattern. */
@@ -189,8 +188,6 @@ public class RocketMQRowDataConverter implements Serializable {
             }
         }
         if (hasMetadata) {
-            String messageKeys = readMetadata(row, KEYS);
-            message.setKeys(messageKeys);
             message.setTags(readMetadata(row, TAGS));
         }
         return message;
@@ -207,7 +204,4 @@ public class RocketMQRowDataConverter implements Serializable {
 
     // --------------------------------------------------------------------------------------------
 
-    public interface MetadataConverter extends Serializable {
-        Object read(RowData consumedRow, int pos);
-    }
 }

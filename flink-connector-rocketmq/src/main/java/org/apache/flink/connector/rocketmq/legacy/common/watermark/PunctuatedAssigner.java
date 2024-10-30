@@ -17,7 +17,7 @@
 
 package org.apache.flink.connector.rocketmq.legacy.common.watermark;
 
-import org.apache.flink.connector.rocketmq.legacy.RocketMQConfig;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks;
 import org.apache.flink.streaming.api.watermark.Watermark;
 

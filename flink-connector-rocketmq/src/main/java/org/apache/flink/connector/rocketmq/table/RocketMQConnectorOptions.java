@@ -25,6 +25,7 @@ import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.DescribedEnum;
 import org.apache.flink.configuration.description.Description;
 import org.apache.flink.configuration.description.InlineElement;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.table.factories.FactoryUtil;
 
@@ -121,11 +122,11 @@ public class RocketMQConnectorOptions {
     public static final ConfigOption<String> ENDPOINTS = RocketMQOptions.ENDPOINTS;
 
     public static final ConfigOption<String> FILTER_TAG =
-            ConfigOptions.key(CLIENT_CONFIG_PREFIX + RocketMQOptions.FILTER_TAG.key())
+            ConfigOptions.key(CLIENT_CONFIG_PREFIX + RocketMQConfig.FILTER_TAG)
                     .stringType()
-                    .defaultValue("*")
+                    .defaultValue(RocketMQConfig.DEFAULT_FILTER_TAG)
                     .withDescription(
-                            "for message filter, rocketmq only support single filter option");
+                            "for message filter, rocketmq pull assign model only support tag filter option");
 
     // --------------------------------------------------------------------------------------------
     // Scan specific options
@@ -165,6 +166,25 @@ public class RocketMQConnectorOptions {
 
     public static final ConfigOption<String> TRANSACTIONAL_ID_PREFIX =
             ConfigOptions.key("TRANSACTIONAL_ID_PREFIX").stringType().noDefaultValue();
+
+    public static final ConfigOption<String> SINK_PARTITIONER =
+            ConfigOptions.key("sink.partitioner")
+                    .stringType()
+                    .defaultValue("default")
+                    .withDescription(
+                            Description.builder()
+                                    .text(
+                                            "Optional output partitioning from Flink's partitions into Rocketmq's MessageQueue. Valid enumerations are")
+                                    .list(
+                                            text(
+                                                    "'default' (use Rocketmq default partitioner to partition records)"),
+                                            text(
+                                                    "'hash' (each Flink partition route to MessageQueue with hash code)"),
+                                            text(
+                                                    "'random' (a Flink partition is distributed to Kafka partitions random)"),
+                                            text(
+                                                    "custom class name (use custom FlinkKafkaPartitioner subclass)"))
+                                    .build());
 
     // --------------------------------------------------------------------------------------------
     // Enums

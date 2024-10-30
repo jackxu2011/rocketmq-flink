@@ -21,8 +21,8 @@ package org.apache.flink.connector.rocketmq.catalog;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.common.constant.SchemaRegistryConstant;
-import org.apache.flink.connector.rocketmq.legacy.RocketMQConfig;
 import org.apache.flink.table.catalog.CommonCatalogOptions;
 
 /** {@link ConfigOption}s for {@link RocketMQCatalog}. */
@@ -37,7 +37,7 @@ public final class RocketMQCatalogFactoryOptions {
                     .defaultValue(RocketMQCatalog.DEFAULT_DB);
 
     public static final ConfigOption<String> NAME_SERVER_ADDR =
-            ConfigOptions.key(RocketMQConfig.NAME_SERVER_ADDR)
+            ConfigOptions.key(RocketMQConfig.ENDPOINTS)
                     .stringType()
                     .defaultValue("http://localhost:9876")
                     .withDescription("Required rocketmq name server address");

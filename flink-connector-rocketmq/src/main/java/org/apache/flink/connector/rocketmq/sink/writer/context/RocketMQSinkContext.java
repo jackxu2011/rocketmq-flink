@@ -37,9 +37,7 @@ public interface RocketMQSinkContext {
      */
     int getParallelInstanceId();
 
-    /**
-     * @return number of parallel RocketMQSink tasks.
-     */
+    /** @return number of parallel RocketMQSink tasks. */
     int getNumberOfParallelInstances();
 
     /**

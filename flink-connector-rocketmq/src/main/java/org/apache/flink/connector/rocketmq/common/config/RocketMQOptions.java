@@ -39,7 +39,7 @@ public class RocketMQOptions {
     // RocketMQ specific options
     // --------------------------------------------------------------------------------------------
     public static final ConfigOption<List<String>> TOPIC =
-            ConfigOptions.key("topic")
+            ConfigOptions.key(RocketMQConfig.TOPIC)
                     .stringType()
                     .asList()
                     .noDefaultValue()
@@ -48,7 +48,7 @@ public class RocketMQOptions {
                                     + "When the table is used as sink, the topic name is the topic to write data. It not supports topic list for sinks. ");
 
     public static final ConfigOption<String> GROUP =
-            ConfigOptions.key("group")
+            ConfigOptions.key(RocketMQConfig.GROUP)
                     .stringType()
                     .noDefaultValue()
                     .withDescription(
@@ -60,23 +60,30 @@ public class RocketMQOptions {
      * address
      */
     public static final ConfigOption<String> ENDPOINTS =
-            ConfigOptions.key("endpoints")
+            ConfigOptions.key(RocketMQConfig.ENDPOINTS)
                     .stringType()
                     .noDefaultValue()
                     .withDescription("RocketMQ server address");
 
     // the config of session credential
     public static final ConfigOption<String> ACCESS_KEY =
-            ConfigOptions.key("accessKey").stringType().noDefaultValue();
+            ConfigOptions.key(RocketMQConfig.ACCESS_KEY).stringType().noDefaultValue();
 
     public static final ConfigOption<String> SECRET_KEY =
-            ConfigOptions.key("secretKey").stringType().noDefaultValue();
+            ConfigOptions.key(RocketMQConfig.SECRET_KEY).stringType().noDefaultValue();
 
     public static final ConfigOption<String> CLIENT_ID_PREFIX =
             ConfigOptions.key("client.id.prefix")
                     .stringType()
                     .noDefaultValue()
                     .withDescription("The prefix to use for the rocketmq client.");
+
+    public static final ConfigOption<String> FILTER_TAG =
+            ConfigOptions.key(RocketMQConfig.FILTER_TAG)
+                    .stringType()
+                    .defaultValue(RocketMQConfig.DEFAULT_FILTER_TAG)
+                    .withDescription(
+                            "for message filter, rocketmq assign mode only support tag filter option");
 
     public static final ConfigOption<String> NAMESPACE =
             ConfigOptions.key("namespace")

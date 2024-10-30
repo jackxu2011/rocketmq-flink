@@ -19,6 +19,7 @@
 package org.apache.flink.connector.rocketmq.table;
 
 import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ReadableConfig;
@@ -27,12 +28,17 @@ import org.apache.flink.connector.rocketmq.table.config.StartupOptions;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.connector.format.DecodingFormat;
+import org.apache.flink.table.connector.format.EncodingFormat;
 import org.apache.flink.table.connector.format.Format;
+import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.factories.DeserializationFormatFactory;
+import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
+import org.apache.flink.table.factories.FactoryUtil.TableFactoryHelper;
+import org.apache.flink.table.factories.SerializationFormatFactory;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.RowKind;
 
@@ -53,6 +59,7 @@ import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_STARTUP_MODE;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SINK_PARALLELISM;
+import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SINK_PARTITIONER;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.TOPIC;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.TRANSACTIONAL_ID_PREFIX;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.VALUE_FIELDS_INCLUDE;
@@ -62,17 +69,20 @@ import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.createValueFormatProjection;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getBoundedOptions;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getGroup;
+import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getPartitioner;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getRocketMQProperties;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getStartupOptions;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.getTopics;
+import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.validateTableSinkOptions;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptionsUtil.validateTableSourceOptions;
 import static org.apache.flink.table.factories.FactoryUtil.createTableFactoryHelper;
 
 /**
  * Defines the {@link DynamicTableSourceFactory} implementation to create {@link
- * RocketMQScanTableSource}.
+ * RocketMQDynamicSource}.
  */
-public class RocketMQDynamicTableFactory implements DynamicTableSourceFactory {
+public class RocketMQDynamicTableFactory
+        implements DynamicTableSourceFactory, DynamicTableSinkFactory {
 
     @Override
     public String factoryIdentifier() {
@@ -102,6 +112,7 @@ public class RocketMQDynamicTableFactory implements DynamicTableSourceFactory {
         optionalOptions.add(SCAN_BOUNDED_MODE);
         optionalOptions.add(SCAN_BOUNDED_TIMESTAMP_MILLIS);
         optionalOptions.add(SINK_PARALLELISM);
+        optionalOptions.add(SINK_PARTITIONER);
         optionalOptions.add(TRANSACTIONAL_ID_PREFIX);
         return optionalOptions;
     }
@@ -112,8 +123,10 @@ public class RocketMQDynamicTableFactory implements DynamicTableSourceFactory {
                         ENDPOINTS,
                         GROUP,
                         TOPIC,
+                        FILTER_TAG,
                         SCAN_STARTUP_MODE,
                         SCAN_STARTUP_TIMESTAMP_MILLIS,
+                        SINK_PARTITIONER,
                         SINK_PARALLELISM,
                         TRANSACTIONAL_ID_PREFIX)
                 .collect(Collectors.toSet());
@@ -151,7 +164,7 @@ public class RocketMQDynamicTableFactory implements DynamicTableSourceFactory {
 
         final String keyPrefix = tableOptions.getOptional(KEY_FIELDS_PREFIX).orElse(null);
 
-        return new RocketMQScanTableSource(
+        return new RocketMQDynamicSource(
                 physicalDataType,
                 valueDecodingFormat,
                 keyProjection,
@@ -194,5 +207,60 @@ public class RocketMQDynamicTableFactory implements DynamicTableSourceFactory {
                         () ->
                                 helper.discoverDecodingFormat(
                                         DeserializationFormatFactory.class, VALUE_FORMAT));
+    }
+
+    @Override
+    public DynamicTableSink createDynamicTableSink(Context context) {
+        FactoryUtil.TableFactoryHelper helper = createTableFactoryHelper(this, context);
+
+        final EncodingFormat<SerializationSchema<RowData>> valueEncodingFormat =
+                getValueEncodingFormat(helper);
+
+        helper.validateExcept(CLIENT_CONFIG_PREFIX);
+
+        final ReadableConfig tableOptions = helper.getOptions();
+
+        validateTableSinkOptions(tableOptions);
+
+        validatePKConstraints(
+                context.getObjectIdentifier(),
+                context.getPrimaryKeyIndexes(),
+                context.getCatalogTable().getOptions(),
+                valueEncodingFormat);
+
+        final DataType physicalDataType = context.getPhysicalRowDataType();
+
+        final Properties properties = getRocketMQProperties(context.getCatalogTable().getOptions());
+
+        final int[] keyProjection = createKeyFormatProjection(tableOptions, physicalDataType);
+
+        final int[] valueProjection = createValueFormatProjection(tableOptions, physicalDataType);
+
+        final String keyPrefix = tableOptions.getOptional(KEY_FIELDS_PREFIX).orElse(null);
+
+        final Integer parallelism = tableOptions.getOptional(SINK_PARALLELISM).orElse(null);
+
+        return new RocketMQDynamicSink(
+                physicalDataType,
+                valueEncodingFormat,
+                keyProjection,
+                valueProjection,
+                keyPrefix,
+                getTopics(tableOptions),
+                getGroup(tableOptions),
+                tableOptions.get(ENDPOINTS),
+                properties,
+                getPartitioner(tableOptions, context.getClassLoader()).orElse(null),
+                parallelism);
+    }
+
+    private static EncodingFormat<SerializationSchema<RowData>> getValueEncodingFormat(
+            TableFactoryHelper helper) {
+        return helper.discoverOptionalEncodingFormat(
+                        SerializationFormatFactory.class, FactoryUtil.FORMAT)
+                .orElseGet(
+                        () ->
+                                helper.discoverEncodingFormat(
+                                        SerializationFormatFactory.class, VALUE_FORMAT));
     }
 }

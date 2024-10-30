@@ -127,7 +127,7 @@ public class RocketMQSinkTest {
                         // If you use transaction message, need set transaction timeout
                         .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
                         .setConfig(
-                                RocketMQSinkConnectorOptions.TRANSACTION_TIMEOUT,
+                                RocketMQSinkOptions.TRANSACTION_TIMEOUT,
                                 TimeUnit.SECONDS.toSeconds(30))
                         .build();
 

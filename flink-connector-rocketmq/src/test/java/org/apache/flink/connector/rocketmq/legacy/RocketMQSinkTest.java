@@ -19,6 +19,7 @@
 package org.apache.flink.connector.rocketmq.legacy;
 
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.legacy.common.selector.DefaultTopicSelector;
 import org.apache.flink.connector.rocketmq.legacy.common.selector.TopicSelector;
 import org.apache.flink.connector.rocketmq.legacy.common.serialization.KeyValueSerializationSchema;

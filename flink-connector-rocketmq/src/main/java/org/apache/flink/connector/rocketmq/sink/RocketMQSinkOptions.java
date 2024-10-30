@@ -24,7 +24,7 @@ import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 
 import java.time.Duration;
 
-public class RocketMQSinkConnectorOptions extends RocketMQConnectorOptions {
+public class RocketMQSinkOptions extends RocketMQConnectorOptions {
 
     // rocketmq client API config prefix.
     public static final String PRODUCER_PREFIX = "rocketmq.sink.";

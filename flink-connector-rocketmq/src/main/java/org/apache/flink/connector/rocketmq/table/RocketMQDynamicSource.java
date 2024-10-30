@@ -60,7 +60,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /** Defines the scan table source of RocketMQ. */
-public class RocketMQScanTableSource implements ScanTableSource, SupportsReadingMetadata {
+public class RocketMQDynamicSource implements ScanTableSource, SupportsReadingMetadata {
 
     private static final String ROCKETMQ_TRANSFORMATION = "rocketMQ";
 
@@ -117,7 +117,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
 
     protected final String tableIdentifier;
 
-    public RocketMQScanTableSource(
+    public RocketMQDynamicSource(
             DataType physicalDataType,
             DecodingFormat<DeserializationSchema<RowData>> valueDecodingFormat,
             int[] keyProjection,
@@ -278,8 +278,8 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
 
     @Override
     public DynamicTableSource copy() {
-        RocketMQScanTableSource tableSource =
-                new RocketMQScanTableSource(
+        RocketMQDynamicSource tableSource =
+                new RocketMQDynamicSource(
                         physicalDataType,
                         valueDecodingFormat,
                         keyProjection,
@@ -298,7 +298,7 @@ public class RocketMQScanTableSource implements ScanTableSource, SupportsReading
 
     @Override
     public String asSummaryString() {
-        return RocketMQScanTableSource.class.getName();
+        return RocketMQDynamicSource.class.getName();
     }
 
     private RocketMQDeserializationSchema<RowData> createRocketMQDeserializationSchema(

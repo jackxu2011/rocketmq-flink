@@ -17,6 +17,7 @@
 
 package org.apache.flink.connector.rocketmq.source.reader;
 
+import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.common.message.MessageExt;
 
 import java.util.ArrayList;
@@ -25,8 +26,6 @@ import java.util.Collection;
 import java.util.Map;
 
 public class MessageViewExt implements MessageView {
-
-    private static final String KEY_SEPARATE = "";
 
     private final String messageId;
 
@@ -64,7 +63,7 @@ public class MessageViewExt implements MessageView {
         this.tag = messageExt.getTags();
         this.keys =
                 messageExt.getKeys() != null
-                        ? Arrays.asList(messageExt.getKeys().split(KEY_SEPARATE))
+                        ? Arrays.asList(messageExt.getKeys().split(MessageConst.KEY_SEPARATOR))
                         : new ArrayList<>();
         this.body = messageExt.getBody();
         this.deliveryAttempt = messageExt.getReconsumeTimes();

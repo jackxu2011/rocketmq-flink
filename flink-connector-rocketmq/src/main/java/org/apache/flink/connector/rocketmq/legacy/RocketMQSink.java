@@ -17,6 +17,7 @@
 package org.apache.flink.connector.rocketmq.legacy;
 
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.legacy.common.selector.MessageQueueSelector;
 import org.apache.flink.connector.rocketmq.legacy.common.util.MetricUtils;
 import org.apache.flink.metrics.Meter;

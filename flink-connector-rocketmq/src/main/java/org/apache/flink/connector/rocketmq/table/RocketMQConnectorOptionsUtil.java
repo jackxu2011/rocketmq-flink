@@ -11,7 +11,13 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
+import org.apache.flink.util.FlinkException;
+import org.apache.flink.util.InstantiationUtil;
 import org.apache.flink.util.Preconditions;
+
+import org.apache.rocketmq.client.producer.MessageQueueSelector;
+import org.apache.rocketmq.client.producer.selector.SelectMessageQueueByHash;
+import org.apache.rocketmq.client.producer.selector.SelectMessageQueueByRandom;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +33,7 @@ import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_BOUNDED_TIMESTAMP_MILLIS;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_STARTUP_MODE;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SCAN_STARTUP_TIMESTAMP_MILLIS;
+import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.SINK_PARTITIONER;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.TOPIC;
 import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions.VALUE_FIELDS_INCLUDE;
 
@@ -39,6 +46,12 @@ public class RocketMQConnectorOptionsUtil {
     // Validation
     // --------------------------------------------------------------------------------------------
     public static void validateTableSourceOptions(ReadableConfig tableOptions) {
+        validateConsumerGroup(tableOptions);
+        validateScanStartupMode(tableOptions);
+        validateScanBoundedMode(tableOptions);
+    }
+
+    public static void validateTableSinkOptions(ReadableConfig tableOptions) {
         validateConsumerGroup(tableOptions);
         validateScanStartupMode(tableOptions);
         validateScanBoundedMode(tableOptions);
@@ -224,11 +237,6 @@ public class RocketMQConnectorOptionsUtil {
         if (keyFields.isEmpty()) {
             return new int[0];
         }
-        if (keyFields.size() > 1) {
-            throw new ValidationException(
-                    "RocketMQ supports only one key field. "
-                            + "Please configure the key field by setting the 'key.fields' option.");
-        }
         final List<String> physicalFields = LogicalTypeChecks.getFieldNames(physicalType);
         return keyFields.stream()
                 .mapToInt(
@@ -298,6 +306,50 @@ public class RocketMQConnectorOptionsUtil {
                     .toArray();
         }
         throw new TableException("Unknown value fields strategy:" + strategy);
+    }
+
+    /**
+     * The partitioner can be either "random", "hash" or a customized partitioner full class name.
+     */
+    public static Optional<MessageQueueSelector> getPartitioner(
+            ReadableConfig tableOptions, ClassLoader classLoader) {
+        return tableOptions
+                .getOptional(SINK_PARTITIONER)
+                .flatMap(
+                        (String partitioner) -> {
+                            switch (partitioner) {
+                                case "random":
+                                    return Optional.of(new SelectMessageQueueByRandom());
+                                case "default":
+                                case "hash":
+                                    return Optional.of(new SelectMessageQueueByHash());
+                                    // Default fallback to full class name of the partitioner.
+                                default:
+                                    return Optional.of(
+                                            initializePartitioner(partitioner, classLoader));
+                            }
+                        });
+    }
+
+    private static MessageQueueSelector initializePartitioner(
+            String partitioner, ClassLoader classLoader) {
+        try {
+            Class<?> clazz = Class.forName(partitioner, true, classLoader);
+            if (!MessageQueueSelector.class.isAssignableFrom(clazz)) {
+                throw new ValidationException(
+                        String.format(
+                                "Sink partitioner class '%s' should implement the required class %s",
+                                partitioner, MessageQueueSelector.class.getName()));
+            }
+
+            return InstantiationUtil.instantiate(
+                    partitioner, MessageQueueSelector.class, classLoader);
+        } catch (ClassNotFoundException | FlinkException e) {
+            throw new ValidationException(
+                    String.format(
+                            "Could not find and instantiate partitioner class '%s'", partitioner),
+                    e);
+        }
     }
 
     private RocketMQConnectorOptionsUtil() {}
