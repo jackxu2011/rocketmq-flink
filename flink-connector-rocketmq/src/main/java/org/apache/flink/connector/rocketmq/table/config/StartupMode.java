@@ -15,5 +15,8 @@ public enum StartupMode {
     LATEST,
 
     /** Start from user-supplied timestamp for consumer group. */
-    TIMESTAMP
+    TIMESTAMP,
+
+    /** Start from user-supplied specific offsets for each partition. */
+    SPECIFIC_OFFSETS
 }

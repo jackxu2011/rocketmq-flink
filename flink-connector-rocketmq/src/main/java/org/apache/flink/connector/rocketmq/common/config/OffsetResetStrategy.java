@@ -17,9 +17,7 @@
 
 package org.apache.flink.connector.rocketmq.common.config;
 
-import org.apache.flink.connector.rocketmq.legacy.common.config.StartupMode;
-
-/** Config for #{@link StartupMode#GROUP_OFFSETS}. */
+/** Config for offsetReset. */
 public enum OffsetResetStrategy {
     /** If group offsets is not found,the latest offset would be set to start consumer */
     LATEST,

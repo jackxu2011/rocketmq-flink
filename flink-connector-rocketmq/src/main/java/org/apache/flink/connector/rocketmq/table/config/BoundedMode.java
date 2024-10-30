@@ -22,5 +22,8 @@ public enum BoundedMode {
     LATEST,
 
     /** End from user-supplied timestamp for each partition. */
-    TIMESTAMP
+    TIMESTAMP,
+
+    /** End from user-supplied specific offsets for each partition. */
+    SPECIFIC_OFFSETS
 }

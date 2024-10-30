@@ -21,9 +21,9 @@ package org.apache.flink.connector.rocketmq.legacy.sourceFunction;
 import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 import org.apache.flink.connector.rocketmq.common.config.RocketMQConfig;
 import org.apache.flink.connector.rocketmq.legacy.RocketMQSourceFunction;
-import org.apache.flink.connector.rocketmq.legacy.common.config.StartupMode;
 import org.apache.flink.connector.rocketmq.legacy.common.serialization.SimpleStringDeserializationSchema;
 import org.apache.flink.connector.rocketmq.legacy.common.util.TestUtils;
+import org.apache.flink.connector.rocketmq.table.config.StartupMode;
 
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.common.message.MessageQueue;
