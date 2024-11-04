@@ -93,9 +93,9 @@ public class RocketMQOptions {
 
     /** 这里不知道对轨迹功能有没有影响, 待验证 */
     public static final ConfigOption<AccessChannel> ACCESS_CHANNEL =
-            ConfigOptions.key("channel")
+            ConfigOptions.key(RocketMQConfig.ACCESS_CHANNEL)
                     .enumType(AccessChannel.class)
-                    .defaultValue(AccessChannel.CLOUD)
+                    .defaultValue(RocketMQConfig.DEFAULT_ACCESS_CHANNEL)
                     .withDescription("RocketMQ access channel");
 
     public static final ConfigOption<Integer> CLIENT_CALLBACK_EXECUTOR_THREADS =
