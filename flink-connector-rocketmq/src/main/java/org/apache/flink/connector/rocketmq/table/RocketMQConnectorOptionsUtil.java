@@ -40,7 +40,7 @@ import static org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions
 public class RocketMQConnectorOptionsUtil {
 
     public static final String IDENTIFIER = "rocketmq";
-    public static final String CLIENT_CONFIG_PREFIX = "rocketmq.";
+    public static final String CLIENT_CONFIG_PREFIX = "config.";
 
     // --------------------------------------------------------------------------------------------
     // Validation
