@@ -29,8 +29,8 @@ import org.apache.rocketmq.remoting.protocol.heartbeat.MessageModel;
 import java.util.Properties;
 import java.util.UUID;
 
-import static org.apache.flink.connector.rocketmq.legacy.common.util.RocketMQUtils.getAccessChannel;
-import static org.apache.flink.connector.rocketmq.legacy.common.util.RocketMQUtils.getInteger;
+import static org.apache.flink.connector.rocketmq.common.util.RocketMQUtils.getAccessChannel;
+import static org.apache.flink.connector.rocketmq.common.util.RocketMQUtils.getInteger;
 
 /** RocketMQConfig for Consumer/Producer. */
 public class RocketMQConfig {
