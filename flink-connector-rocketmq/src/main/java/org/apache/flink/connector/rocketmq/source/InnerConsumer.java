@@ -38,6 +38,8 @@ public interface InnerConsumer extends AutoCloseable {
      */
     Set<MessageQueue> assignment();
 
+    void setConsumeFromFirst();
+
     /** start inner consumer */
     void start();
 

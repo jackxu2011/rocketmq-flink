@@ -11,6 +11,9 @@ import org.apache.flink.types.DeserializationException;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nullable;
 
 import java.io.IOException;
@@ -21,6 +24,8 @@ import java.util.List;
 /** A specific {@link RocketMQDeserializationSchema} for {@link RocketMQDynamicSource}. */
 public class RocketMQDynamicDeserializationSchema
         implements RocketMQDeserializationSchema<RowData> {
+
+    private static Logger LOG = LoggerFactory.getLogger(RocketMQDynamicDeserializationSchema.class);
 
     private final DeserializationSchema<RowData> valueDeserialization;
 
@@ -58,6 +63,7 @@ public class RocketMQDynamicDeserializationSchema
     public void deserialize(MessageView record, Collector<RowData> collector) throws IOException {
         // shortcut in case no output projection is required,
         // also not for a cartesian product with the keys
+        LOG.info("deserialize message: {}", new String(record.getBody()));
         if (!hasKey && !hasMetadata) {
             valueDeserialization.deserialize(record.getBody(), collector);
             return;

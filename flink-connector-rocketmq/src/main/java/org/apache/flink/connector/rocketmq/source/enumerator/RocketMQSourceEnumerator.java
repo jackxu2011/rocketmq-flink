@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -138,6 +139,9 @@ public class RocketMQSourceEnumerator
     @Override
     public void start() {
         consumer = new RocketMQConsumer(configuration);
+        if (Objects.nonNull(startingOffsetsInitializer.getConsumeFromWhere())) {
+            consumer.setConsumeFromFirst();
+        }
         consumer.start();
 
         if (partitionDiscoveryIntervalMs > 0) {

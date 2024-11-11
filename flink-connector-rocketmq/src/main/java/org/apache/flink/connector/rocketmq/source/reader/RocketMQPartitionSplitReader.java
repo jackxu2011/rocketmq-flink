@@ -77,10 +77,11 @@ public class RocketMQPartitionSplitReader<T>
             Configuration configuration,
             SourceReaderContext context,
             RocketMQSourceReaderMetrics rocketmqSourceReaderMetrics) {
-        configuration.set(
+        Configuration consumerConfig = configuration.clone();
+        consumerConfig.set(
                 RocketMQOptions.CLIENT_ID_PREFIX, CLIENT_PREFIX + context.getIndexOfSubtask());
         POLL_TIMEOUT = Duration.ofMillis(configuration.get(RocketMQSourceOptions.POLL_TIMEOUT));
-        this.consumer = new RocketMQConsumer(configuration);
+        this.consumer = new RocketMQConsumer(consumerConfig);
         this.consumer.start();
         this.rocketmqSourceReaderMetrics = rocketmqSourceReaderMetrics;
     }

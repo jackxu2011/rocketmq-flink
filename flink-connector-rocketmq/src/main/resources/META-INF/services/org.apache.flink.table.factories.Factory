@@ -15,3 +15,4 @@
 
 org.apache.flink.connector.rocketmq.table.RocketMQDynamicTableFactory
 org.apache.flink.connector.rocketmq.catalog.RocketMQCatalogFactory
+org.apache.flink.connector.rocketmq.table.formats.JsonArrayFormatFactory

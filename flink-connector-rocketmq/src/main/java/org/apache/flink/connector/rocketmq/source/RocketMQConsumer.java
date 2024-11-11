@@ -33,6 +33,7 @@ import org.apache.rocketmq.acl.common.SessionCredentials;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.ThreadFactoryImpl;
+import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
@@ -104,6 +105,10 @@ public class RocketMQConsumer implements InnerConsumer {
         }
         String tag = configuration.get(RocketMQOptions.FILTER_TAG);
         topics.forEach(topic -> this.consumer.setSubExpressionForAssign(topic, tag));
+    }
+
+    public void setConsumeFromFirst() {
+        this.consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
     }
 
     private static String createInstanceName(Configuration configuration, String groupId) {

@@ -19,6 +19,7 @@ package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 
 import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 
+import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageQueue;
 
 import java.util.Collection;
@@ -58,5 +59,10 @@ class TimestampOffsetsInitializer implements OffsetsInitializer {
     @Override
     public OffsetResetStrategy getAutoOffsetResetStrategy() {
         return OffsetResetStrategy.LATEST;
+    }
+
+    @Override
+    public ConsumeFromWhere getConsumeFromWhere() {
+        return ConsumeFromWhere.CONSUME_FROM_TIMESTAMP;
     }
 }
