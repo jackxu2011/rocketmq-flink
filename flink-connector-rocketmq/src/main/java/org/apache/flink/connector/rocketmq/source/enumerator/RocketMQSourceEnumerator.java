@@ -131,6 +131,7 @@ public class RocketMQSourceEnumerator
         this.allocateStrategy =
                 AllocateStrategyFactory.getStrategy(
                         configuration, context, rocketMQSourceEnumState);
+        this.initialDiscoveryFinished = rocketMQSourceEnumState.initialDiscoveryFinished();
 
         // For rocketmq setting
         this.groupId = configuration.get(RocketMQConnectorOptions.GROUP);

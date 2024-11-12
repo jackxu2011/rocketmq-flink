@@ -94,10 +94,12 @@ public class RocketMQConsumer implements InnerConsumer {
         this.consumer.setAutoCommit(false);
         this.consumer.setVipChannelEnabled(false);
         this.consumer.setInstanceName(createInstanceName(configuration, groupId));
+        this.consumer.setAccessChannel(configuration.get(RocketMQOptions.ACCESS_CHANNEL));
         this.adminExt.setNamesrvAddr(endPoints);
         this.adminExt.setAdminExtGroup(groupId);
         this.adminExt.setVipChannelEnabled(false);
         this.adminExt.setInstanceName(createInstanceName(configuration, groupId));
+        this.adminExt.setAccessChannel(configuration.get(RocketMQOptions.ACCESS_CHANNEL));
         List<String> topics =
                 configuration.getOptional(RocketMQOptions.TOPIC).orElseGet(Collections::emptyList);
         if (topics.isEmpty()) {
