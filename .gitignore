@@ -21,6 +21,7 @@ hs_err_pid*
 .idea/
 
 target/
+tools/japicmp-output
 
 .DS_Store
 nohup.out

@@ -66,8 +66,8 @@
         <maven.test.skip>false</maven.test.skip>
         <maven.javadoc.skip>false</maven.javadoc.skip>
 
-        <japicmp.skip>false</japicmp.skip>
-        <japicmp.referenceVersion>1.18.0</japicmp.referenceVersion>
+        <japicmp.skip>true</japicmp.skip>
+        <japicmp.referenceVersion>2.0.0</japicmp.referenceVersion>
 
         <flink.parent.artifactId>flink-connector-rocketmq-parent</flink.parent.artifactId>
         <!-- This property should contain the add-opens/add-exports commands required for the tests
