@@ -216,7 +216,13 @@ public class RocketMQDynamicSource implements ScanTableSource, SupportsReadingMe
                 rocketMQSourceBuilder.setStartingOffsets(OffsetsInitializer.latest());
                 break;
             case GROUP_OFFSETS:
-                rocketMQSourceBuilder.setStartingOffsets(OffsetsInitializer.commited());
+                String offsetResetStrategy =
+                        properties.getProperty(
+                                RocketMQSourceOptions.OFFSET_RESET_STRATEGY.key(),
+                                OffsetResetStrategy.LATEST.name());
+                rocketMQSourceBuilder.setStartingOffsets(
+                        OffsetsInitializer.commited(
+                                OffsetResetStrategy.valueOf(offsetResetStrategy)));
                 break;
             case TIMESTAMP:
                 rocketMQSourceBuilder.setStartingOffsets(
@@ -232,14 +238,7 @@ public class RocketMQDynamicSource implements ScanTableSource, SupportsReadingMe
                 rocketMQSourceBuilder.setBounded(OffsetsInitializer.latest());
                 break;
             case GROUP_OFFSETS:
-                String offsetResetStrategy =
-                        properties.getProperty(
-                                RocketMQSourceOptions.OFFSET_RESET_STRATEGY.key(),
-                                OffsetResetStrategy.NONE.name());
-
-                rocketMQSourceBuilder.setBounded(
-                        OffsetsInitializer.commited(
-                                OffsetResetStrategy.valueOf(offsetResetStrategy)));
+                rocketMQSourceBuilder.setBounded(OffsetsInitializer.commited());
                 break;
             case TIMESTAMP:
                 rocketMQSourceBuilder.setBounded(

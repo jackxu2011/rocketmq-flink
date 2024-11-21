@@ -22,7 +22,7 @@ import org.apache.flink.connector.rocketmq.common.config.RocketMQOptions;
 import org.apache.flink.connector.rocketmq.source.reader.ConsumerRecords;
 import org.apache.flink.connector.rocketmq.source.reader.MessageView;
 import org.apache.flink.connector.rocketmq.source.reader.MessageViewExt;
-import org.apache.flink.connector.rocketmq.source.util.UtilAll;
+import org.apache.flink.connector.rocketmq.source.util.MessageQueueUtil;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.util.FlinkRuntimeException;
 import org.apache.flink.util.StringUtils;
@@ -33,6 +33,7 @@ import org.apache.rocketmq.acl.common.SessionCredentials;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.ThreadFactoryImpl;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
@@ -109,8 +110,11 @@ public class RocketMQConsumer implements InnerConsumer {
         topics.forEach(topic -> this.consumer.setSubExpressionForAssign(topic, tag));
     }
 
-    public void setConsumeFromFirst() {
-        this.consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+    public void setConsumeFromWhere(ConsumeFromWhere consumeFromWhere, long timestamp) {
+        this.consumer.setConsumeFromWhere(consumeFromWhere);
+        if (consumeFromWhere == ConsumeFromWhere.CONSUME_FROM_TIMESTAMP) {
+            this.consumer.setConsumeTimestamp(UtilAll.timeMillisToHumanString3(timestamp));
+        }
     }
 
     private static String createInstanceName(Configuration configuration, String groupId) {
@@ -256,13 +260,13 @@ public class RocketMQConsumer implements InnerConsumer {
             this.consumer.seek(messageQueue, offset);
             LOG.info(
                     "Consumer current offset has been reset, mq={}, next poll will start from offset={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     offset);
         } catch (MQClientException e) {
             LOG.info(
                     "Consumer overrides the fetch offsets with the offset: {}, remote error, mq={}",
                     offset,
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     e);
             throw new RuntimeException(e);
         }
@@ -275,7 +279,7 @@ public class RocketMQConsumer implements InnerConsumer {
         } catch (MQClientException e) {
             LOG.info(
                     "Consumer overrides the fetch offsets with the begin offset remote error, mq={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     e);
             throw new RuntimeException(e);
         }
@@ -288,7 +292,7 @@ public class RocketMQConsumer implements InnerConsumer {
         } catch (MQClientException e) {
             LOG.info(
                     "Consumer overrides the fetch offsets with the end offset remote error, mq={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     e);
             throw new RuntimeException(e);
         }
@@ -313,18 +317,18 @@ public class RocketMQConsumer implements InnerConsumer {
                 offset = adminExt.minOffset(messageQueue);
                 LOG.info(
                         "No offset in broker, mq={},use minOffset={}",
-                        UtilAll.getQueueDescription(messageQueue),
+                        MessageQueueUtil.getQueueDescription(messageQueue),
                         offset);
             }
             LOG.info(
                     "Get offset from remote, mq={}, offset={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     offset);
             return offset;
         } catch (MQClientException e) {
             LOG.info(
                     "Consumer get committed offset from remote error, mq={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     e);
             throw new RuntimeException(e);
         }
@@ -340,13 +344,13 @@ public class RocketMQConsumer implements InnerConsumer {
             long offset = adminExt.minOffset(messageQueue);
             LOG.info(
                     "Consumer seek min offset from remote, mq={}, offset={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     offset);
             return offset;
         } catch (Exception e) {
             LOG.info(
                     "Consumer seek min offset from remote error, mq={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     e);
             throw new RuntimeException(e);
         }
@@ -363,13 +367,13 @@ public class RocketMQConsumer implements InnerConsumer {
             long offset = adminExt.maxOffset(messageQueue);
             LOG.info(
                     "Consumer seek max offset from remote, mq={}, offset={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     offset);
             return offset;
         } catch (Exception e) {
             LOG.info(
                     "Consumer seek max offset from remote error, mq={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     e);
             throw new RuntimeException(e);
         }
@@ -386,14 +390,14 @@ public class RocketMQConsumer implements InnerConsumer {
             long offset = adminExt.searchOffset(messageQueue, timestamp);
             LOG.info(
                     "Consumer seek offset by timestamp from remote, mq={}, timestamp={}, offset={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     timestamp,
                     offset);
             return offset;
         } catch (MQClientException e) {
             LOG.info(
                     "Consumer seek offset by timestamp from remote error, mq={}, timestamp={}",
-                    UtilAll.getQueueDescription(messageQueue),
+                    MessageQueueUtil.getQueueDescription(messageQueue),
                     timestamp,
                     e);
             throw new RuntimeException(e);

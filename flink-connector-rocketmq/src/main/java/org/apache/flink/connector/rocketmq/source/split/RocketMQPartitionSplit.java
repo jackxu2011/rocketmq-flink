@@ -19,7 +19,7 @@
 package org.apache.flink.connector.rocketmq.source.split;
 
 import org.apache.flink.api.connector.source.SourceSplit;
-import org.apache.flink.connector.rocketmq.source.util.UtilAll;
+import org.apache.flink.connector.rocketmq.source.util.MessageQueueUtil;
 import org.apache.flink.util.FlinkRuntimeException;
 
 import org.apache.rocketmq.common.message.MessageQueue;
@@ -93,7 +93,7 @@ public class RocketMQPartitionSplit implements SourceSplit {
 
     @Override
     public String splitId() {
-        return UtilAll.getSplitId(messageQueue);
+        return MessageQueueUtil.getSplitId(messageQueue);
     }
 
     @Override

@@ -56,8 +56,6 @@ public interface OffsetsInitializer extends Serializable {
      */
     OffsetResetStrategy getAutoOffsetResetStrategy();
 
-    ConsumeFromWhere getConsumeFromWhere();
-
     /**
      * An interface that provides necessary information to the {@link OffsetsInitializer} to get the
      * initial offsets of the RocketMQ message queues.

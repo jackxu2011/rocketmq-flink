@@ -61,15 +61,4 @@ public class StrategyOffsetsInitializer implements OffsetsInitializer {
     public OffsetResetStrategy getAutoOffsetResetStrategy() {
         return offsetResetStrategy;
     }
-
-    @Override
-    public ConsumeFromWhere getConsumeFromWhere() {
-        switch (fromWhere) {
-            case CONSUME_FROM_LAST_OFFSET:
-            case CONSUME_FROM_FIRST_OFFSET:
-                return fromWhere;
-            default:
-                return ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET;
-        }
-    }
 }

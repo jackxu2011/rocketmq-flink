@@ -19,6 +19,7 @@ package org.apache.flink.connector.rocketmq.source;
 
 import org.apache.flink.connector.rocketmq.source.reader.ConsumerRecords;
 
+import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageQueue;
 
 import java.time.Duration;
@@ -38,7 +39,7 @@ public interface InnerConsumer extends AutoCloseable {
      */
     Set<MessageQueue> assignment();
 
-    void setConsumeFromFirst();
+    void setConsumeFromWhere(ConsumeFromWhere consumeFromWhere, long timestamp);
 
     /** start inner consumer */
     void start();

@@ -19,19 +19,22 @@ package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 
 import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 
-import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageQueue;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-class TimestampOffsetsInitializer implements OffsetsInitializer {
+public class TimestampOffsetsInitializer implements OffsetsInitializer {
     private static final long serialVersionUID = 2932230571773627233L;
     private final long startingTimestamp;
 
-    TimestampOffsetsInitializer(long startingTimestamp) {
+    public TimestampOffsetsInitializer(long startingTimestamp) {
         this.startingTimestamp = startingTimestamp;
+    }
+
+    public long getStartingTimestamp() {
+        return startingTimestamp;
     }
 
     @Override
@@ -58,11 +61,6 @@ class TimestampOffsetsInitializer implements OffsetsInitializer {
 
     @Override
     public OffsetResetStrategy getAutoOffsetResetStrategy() {
-        return OffsetResetStrategy.LATEST;
-    }
-
-    @Override
-    public ConsumeFromWhere getConsumeFromWhere() {
-        return ConsumeFromWhere.CONSUME_FROM_TIMESTAMP;
+        return OffsetResetStrategy.TIMESTAMP;
     }
 }

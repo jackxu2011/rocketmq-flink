@@ -17,6 +17,8 @@
 
 package org.apache.flink.connector.rocketmq.common.config;
 
+import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
+
 /** Config for offsetReset. */
 public enum OffsetResetStrategy {
     /** If group offsets is not found,the latest offset would be set to start consumer */
@@ -24,5 +26,20 @@ public enum OffsetResetStrategy {
 
     /** If group offsets is not found,the earliest offset would be set to start consumer */
     EARLIEST,
-    NONE
+
+    /** If group offsets is not found,the timestamp offset would be set to start consumer */
+    TIMESTAMP;
+
+    public ConsumeFromWhere toConsumeFromWhere() {
+        switch (this) {
+            case LATEST:
+                return ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET;
+            case EARLIEST:
+                return ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET;
+            case TIMESTAMP:
+                return ConsumeFromWhere.CONSUME_FROM_TIMESTAMP;
+            default:
+                throw new IllegalArgumentException("Unknown offsetResetStrategy: " + this);
+        }
+    }
 }

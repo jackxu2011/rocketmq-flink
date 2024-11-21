@@ -31,7 +31,7 @@ import org.apache.flink.connector.rocketmq.source.RocketMQConsumer;
 import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.metrics.RocketMQSourceReaderMetrics;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
-import org.apache.flink.connector.rocketmq.source.util.UtilAll;
+import org.apache.flink.connector.rocketmq.source.util.MessageQueueUtil;
 import org.apache.flink.util.FlinkRuntimeException;
 import org.apache.flink.util.Preconditions;
 
@@ -236,7 +236,9 @@ public class RocketMQPartitionSplitReader<T>
                     emptyPartitions);
             // Add empty partitions to empty split set for later cleanup in fetch()
             emptySplits.addAll(
-                    emptyPartitions.stream().map(UtilAll::getSplitId).collect(Collectors.toSet()));
+                    emptyPartitions.stream()
+                            .map(MessageQueueUtil::getSplitId)
+                            .collect(Collectors.toSet()));
             // Un-assign partitions from Kafka consumer
             unassignPartitions(emptyPartitions);
         }
@@ -266,7 +268,7 @@ public class RocketMQPartitionSplitReader<T>
                 stoppingOffset,
                 currentOffset);
         finishedPartitions.add(partition);
-        recordsBySplits.addFinishedSplit(UtilAll.getSplitId(partition));
+        recordsBySplits.addFinishedSplit(MessageQueueUtil.getSplitId(partition));
     }
 
     private long getStoppingOffset(MessageQueue partition) {
@@ -314,7 +316,7 @@ public class RocketMQPartitionSplitReader<T>
                 currentSplitStoppingOffset =
                         stoppingOffsets.getOrDefault(currentTopicPartition, Long.MAX_VALUE);
 
-                return UtilAll.getSplitId(currentTopicPartition);
+                return MessageQueueUtil.getSplitId(currentTopicPartition);
             } else {
                 currentTopicPartition = null;
                 recordIterator = null;

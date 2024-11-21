@@ -21,7 +21,7 @@ import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 
-public class UtilAll {
+public class MessageQueueUtil {
 
     public static final String SEPARATOR = "#";
 

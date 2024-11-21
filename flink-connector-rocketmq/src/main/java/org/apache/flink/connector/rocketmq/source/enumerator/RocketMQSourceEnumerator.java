@@ -33,6 +33,7 @@ import org.apache.flink.connector.rocketmq.source.RocketMQSourceOptions;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategy;
 import org.apache.flink.connector.rocketmq.source.enumerator.allocate.AllocateStrategyFactory;
 import org.apache.flink.connector.rocketmq.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.flink.connector.rocketmq.source.enumerator.initializer.TimestampOffsetsInitializer;
 import org.apache.flink.connector.rocketmq.source.split.RocketMQPartitionSplit;
 import org.apache.flink.connector.rocketmq.table.RocketMQConnectorOptions;
 import org.apache.flink.util.FlinkRuntimeException;
@@ -140,8 +141,17 @@ public class RocketMQSourceEnumerator
     @Override
     public void start() {
         consumer = new RocketMQConsumer(configuration);
-        if (Objects.nonNull(startingOffsetsInitializer.getConsumeFromWhere())) {
-            consumer.setConsumeFromFirst();
+        if (Objects.nonNull(
+                startingOffsetsInitializer.getAutoOffsetResetStrategy().toConsumeFromWhere())) {
+            long timestamp = 0;
+            if (startingOffsetsInitializer instanceof TimestampOffsetsInitializer) {
+                timestamp =
+                        ((TimestampOffsetsInitializer) startingOffsetsInitializer)
+                                .getStartingTimestamp();
+            }
+            consumer.setConsumeFromWhere(
+                    startingOffsetsInitializer.getAutoOffsetResetStrategy().toConsumeFromWhere(),
+                    timestamp);
         }
         consumer.start();
 

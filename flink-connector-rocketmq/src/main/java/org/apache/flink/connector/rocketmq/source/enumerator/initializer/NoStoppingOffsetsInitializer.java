@@ -20,7 +20,6 @@ package org.apache.flink.connector.rocketmq.source.enumerator.initializer;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.rocketmq.common.config.OffsetResetStrategy;
 
-import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageQueue;
 
 import java.util.Collection;
@@ -43,10 +42,5 @@ public class NoStoppingOffsetsInitializer implements OffsetsInitializer {
         throw new UnsupportedOperationException(
                 "The OffsetsSelectorNoStopping does not have an OffsetResetStrategy. "
                         + "It should only be used to end offset.");
-    }
-
-    @Override
-    public ConsumeFromWhere getConsumeFromWhere() {
-        return null;
     }
 }
